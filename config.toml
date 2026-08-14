@@ -1,0 +1,14 @@
+base_url = "http://100.111.221.80"
+title = "cam@arch"
+description = "Notes from a homelab, and whatever else."
+compile_sass = false
+generate_feeds = true
+feed_filenames = ["atom.xml"]
+build_search_index = false
+
+[markdown]
+
+[markdown.highlighting]
+theme = "catppuccin-mocha"
+
+[extra]
