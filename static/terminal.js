@@ -43,13 +43,6 @@
   // ---------------------------------------------------------------------
   var fs = { type: "dir", children: {} };
 
-  fs.children["about.md"] = {
-    type: "file",
-    title: "whoami",
-    url: window.__ABOUT_URL__,
-    body: window.__ABOUT_BODY__ || "",
-  };
-
   fs.children["posts"] = { type: "dir", children: {} };
   window.__POSTS__.forEach(function (p) {
     fs.children["posts"].children[p.slug + ".md"] = {
@@ -60,6 +53,66 @@
       body: p.body || "",
     };
   });
+
+  fs.children["whoami"] = {
+    type: "dir",
+    children: {
+      "about.md": {
+        type: "file",
+        title: "whoami",
+        url: window.__ABOUT_URL__,
+        body: window.__ABOUT_BODY__ || "",
+      },
+    },
+  };
+
+  fs.children["music"] = {
+    type: "dir",
+    children: {
+      "playlist.md": {
+        type: "file",
+        title: "music",
+        url: window.__MUSIC_URL__,
+        body: window.__MUSIC_BODY__ || "",
+      },
+    },
+  };
+
+  fs.children["thingsAndStuff"] = {
+    type: "dir",
+    children: {
+      "notes.md": {
+        type: "file",
+        title: "thingsAndStuff",
+        url: window.__THINGS_URL__,
+        body: window.__THINGS_BODY__ || "",
+      },
+    },
+  };
+
+  fs.children["cv"] = {
+    type: "dir",
+    children: {
+      "resume.md": {
+        type: "file",
+        title: "cv",
+        url: window.__CV_URL__,
+        body: window.__CV_BODY__ || "",
+      },
+    },
+  };
+
+  fs.children["contact"] = {
+    type: "dir",
+    children: {
+      "email.md": {
+        type: "file",
+        title: "contact",
+        url: window.__CONTACT_URL__,
+        body: window.__CONTACT_BODY__ || "",
+      },
+    },
+  };
 
   var cwdPath = [];
 

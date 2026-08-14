@@ -2,6 +2,10 @@
 {% block content %}
 {% set posts = get_section(path="posts/_index.md") %}
 {% set about = get_page(path="about.md") %}
+{% set music = get_page(path="music.md") %}
+{% set things = get_page(path="thingsAndStuff.md") %}
+{% set cv = get_page(path="cv.md") %}
+{% set contact = get_page(path="contact.md") %}
 <div class="terminal" id="terminal">
   <div class="term-output" id="term-output">
     <div>Type 'help' to see available commands.</div>
@@ -35,6 +39,14 @@ window.__POSTS__ = [
 ];
 window.__ABOUT_URL__ = {{ (get_url(path="about") ~ "/") | json_encode() | safe }};
 window.__ABOUT_BODY__ = {{ (about.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__MUSIC_URL__ = {{ (get_url(path="music") ~ "/") | json_encode() | safe }};
+window.__MUSIC_BODY__ = {{ (music.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__THINGS_URL__ = {{ (get_url(path="thingsAndStuff") ~ "/") | json_encode() | safe }};
+window.__THINGS_BODY__ = {{ (things.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__CV_URL__ = {{ (get_url(path="cv") ~ "/") | json_encode() | safe }};
+window.__CV_BODY__ = {{ (cv.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__CONTACT_URL__ = {{ (get_url(path="contact") ~ "/") | json_encode() | safe }};
+window.__CONTACT_BODY__ = {{ (contact.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
 </script>
 <script src="{{ get_url(path="terminal.js") }}" defer></script>
 {% endblock content %}
