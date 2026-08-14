@@ -41,6 +41,57 @@
     return null;
   }
 
+  var FILE_ARG_COMMANDS = ["cat", "head", "tail", "wc"];
+
+  function fileCandidates() {
+    var list = window.__POSTS__.map(function (p) {
+      return p.slug + ".md";
+    });
+    list.push("about.md");
+    return list;
+  }
+
+  function handleTabComplete() {
+    var value = input.value;
+    var endsWithSpace = /\s$/.test(value);
+    var tokens = value.split(/\s+/).filter(Boolean);
+    var candidates, prefix, isFirstToken;
+
+    if (tokens.length === 0 || (tokens.length === 1 && !endsWithSpace)) {
+      prefix = tokens[0] || "";
+      candidates = Object.keys(commands).filter(function (c) {
+        return c.indexOf(prefix) === 0;
+      });
+      isFirstToken = true;
+    } else {
+      var cmdName = tokens[0];
+      if (FILE_ARG_COMMANDS.indexOf(cmdName) === -1) {
+        return;
+      }
+      prefix = endsWithSpace ? "" : tokens[tokens.length - 1];
+      candidates = fileCandidates().filter(function (f) {
+        return f.indexOf(prefix) === 0;
+      });
+      isFirstToken = false;
+    }
+
+    if (candidates.length === 0) {
+      return;
+    }
+    if (candidates.length === 1) {
+      if (isFirstToken) {
+        input.value = candidates[0] + " ";
+      } else {
+        tokens[tokens.length - 1] = candidates[0];
+        input.value = tokens.join(" ") + " ";
+      }
+    } else {
+      printEcho(value);
+      println(candidates.join("  "));
+      scrollToBottom();
+    }
+  }
+
   var manual = {
     help: "help - show available commands",
     ls: "ls - list posts",
@@ -365,6 +416,9 @@
         input.value = "";
       }
       e.preventDefault();
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      handleTabComplete();
     }
   });
 
