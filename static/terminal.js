@@ -34,6 +34,11 @@
       println("  ls            list posts");
       println("  cat <file>    open a post (or about.md)");
       println("  whoami        about this site");
+      println("  pwd           print working directory");
+      println("  echo <text>   print text back");
+      println("  date          show the current date/time");
+      println("  neofetch      show fake system info");
+      println("  history       show command history");
       println("  clear         clear the screen");
       println("  help          show this message");
     },
@@ -62,6 +67,36 @@
     },
     whoami: function () {
       window.location.href = window.__ABOUT_URL__;
+    },
+    pwd: function () {
+      println("/srv/http");
+    },
+    echo: function (args) {
+      println(args.join(" "));
+    },
+    date: function () {
+      println(new Date().toString());
+    },
+    neofetch: function () {
+      println("cam@arch");
+      println("--------");
+      println("OS: Arch Linux x86_64");
+      println("Host: homelab");
+      println("Shell: terminal.js");
+      println("Theme: catppuccin-mocha (terminal)");
+      println("Terminal: this very box you are looking at");
+    },
+    history: function () {
+      if (history.length === 0) {
+        println("(no history yet)");
+        return;
+      }
+      history.forEach(function (cmd, i) {
+        println("  " + (i + 1) + "  " + cmd);
+      });
+    },
+    sudo: function (args) {
+      println("cam is not in the sudoers file. This incident will be reported.");
     },
     clear: function () {
       output.innerHTML = "";
