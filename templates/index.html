@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 {% set posts = get_section(path="posts/_index.md") %}
+<div class="terminal" id="terminal">
+  <div class="term-output" id="term-output">
+    <div>Type 'help' to see available commands.</div>
+  </div>
+  <div class="term-input-line">
+    <span class="term-prompt">$</span>
+    <input type="text" id="term-input" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+  </div>
+</div>
+<noscript>
 <ul class="post-list">
   {% for page in posts.pages %}
   <li>
@@ -9,7 +19,14 @@
   </li>
   {% endfor %}
 </ul>
-{% if posts.pages | length == 0 %}
-<p class="muted">no posts yet.</p>
-{% endif %}
+</noscript>
+<script>
+window.__POSTS__ = [
+  {% for page in posts.pages %}
+  { slug: {{ page.slug | json_encode() | safe }}, title: {{ page.title | json_encode() | safe }}, date: {{ page.date | date(format="%Y-%m-%d") | json_encode() | safe }}, permalink: {{ page.permalink | json_encode() | safe }} }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+window.__ABOUT_URL__ = {{ (get_url(path="about") ~ "/") | json_encode() | safe }};
+</script>
+<script src="{{ get_url(path="terminal.js") }}" defer></script>
 {% endblock content %}

@@ -95,3 +95,41 @@ footer.site-footer {
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+.terminal {
+  cursor: text;
+}
+
+.term-output {
+  white-space: pre-wrap;
+  margin-bottom: 0.5rem;
+}
+
+.term-output div {
+  padding: 0.05rem 0;
+}
+
+.term-echo {
+  color: var(--fg);
+}
+
+.term-input-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.term-prompt {
+  color: var(--accent);
+}
+
+#term-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: inherit;
+  caret-color: var(--accent);
+}
