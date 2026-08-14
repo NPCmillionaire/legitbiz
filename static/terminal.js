@@ -715,9 +715,21 @@
     }
   });
 
+  function printWelcome() {
+    println("welcome to cam@arch -- this is a fake but functional terminal.");
+    println("type a command and press enter. a few to start with:");
+    println("  ls            see what's here");
+    println("  cd <dir>      move into whoami/, posts/, music/, cv/, contact/, ...");
+    println("  cat <file>    open a file");
+    println("  help          full command list");
+    println("");
+    println("tab completes commands/paths, up/down cycles history, ctrl+r searches it, && chains commands.");
+  }
+
   document.getElementById("terminal").addEventListener("click", function () {
     input.focus();
   });
 
+  printWelcome();
   input.focus();
 })();
