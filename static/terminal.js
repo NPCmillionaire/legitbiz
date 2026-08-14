@@ -39,6 +39,7 @@
       println("  date          show the current date/time");
       println("  neofetch      show fake system info");
       println("  history       show command history");
+      println("  pastebin      open the pastebin");
       println("  clear         clear the screen");
       println("  help          show this message");
     },
@@ -94,6 +95,9 @@
       history.forEach(function (cmd, i) {
         println("  " + (i + 1) + "  " + cmd);
       });
+    },
+    pastebin: function () {
+      window.location.href = "http://100.111.221.80:8822/";
     },
     sudo: function (args) {
       println("cam is not in the sudoers file. This incident will be reported.");
