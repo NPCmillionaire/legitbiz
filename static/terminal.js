@@ -52,6 +52,7 @@
     neofetch: "neofetch - display system information",
     history: "history - show command history",
     pastebin: "pastebin - open the pastebin",
+    github: "github - open my GitHub profile",
     find: "find <keyword> - search for files by name",
     grep: "grep <keyword> - search file contents for a keyword",
     tree: "tree - list contents of the site in a tree-like format",
@@ -80,6 +81,7 @@
       println("  neofetch      show fake system info");
       println("  history       show command history");
       println("  pastebin      open the pastebin");
+      println("  github        open my GitHub profile");
       println("  find <text>   search for files by name");
       println("  grep <text>   search file contents");
       println("  tree          show site structure");
@@ -151,6 +153,9 @@
     },
     pastebin: function () {
       window.location.href = "http://100.111.221.80:8822/";
+    },
+    github: function () {
+      window.location.href = "https://github.com/npcmillionaire";
     },
     find: function (args) {
       var q = (args[0] || "").toLowerCase();
