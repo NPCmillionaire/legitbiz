@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+  <meta name="description" content="{{ config.description }}">
+  <link rel="stylesheet" href="{{ get_url(path="style.css") }}">
+  <link rel="alternate" type="application/atom+xml" title="{{ config.title }}" href="{{ get_url(path="atom.xml") }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="prompt">{{ config.title }}:~$</div>
+    <nav class="site-nav">
+      <a href="{{ get_url(path="/") }}">posts</a>
+      <a href="{{ get_url(path="about") }}">whoami</a>
+      <a href="{{ get_url(path="atom.xml") }}">feed</a>
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock content %}
+  </main>
+  <footer class="site-footer">
+    <span>{{ config.description }}</span>
+  </footer>
+</body>
+</html>
