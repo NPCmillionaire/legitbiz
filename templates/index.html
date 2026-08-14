@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {% set posts = get_section(path="posts/_index.md") %}
+{% set about = get_page(path="about.md") %}
 <div class="terminal" id="terminal">
   <div class="term-output" id="term-output">
     <div>Type 'help' to see available commands.</div>
@@ -23,10 +24,17 @@
 <script>
 window.__POSTS__ = [
   {% for page in posts.pages %}
-  { slug: {{ page.slug | json_encode() | safe }}, title: {{ page.title | json_encode() | safe }}, date: {{ page.date | date(format="%Y-%m-%d") | json_encode() | safe }}, permalink: {{ page.permalink | json_encode() | safe }} }{% if not loop.last %},{% endif %}
+  {
+    slug: {{ page.slug | json_encode() | safe }},
+    title: {{ page.title | json_encode() | safe }},
+    date: {{ page.date | date(format="%Y-%m-%d") | json_encode() | safe }},
+    permalink: {{ page.permalink | json_encode() | safe }},
+    body: {{ (page.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }}
+  }{% if not loop.last %},{% endif %}
   {% endfor %}
 ];
 window.__ABOUT_URL__ = {{ (get_url(path="about") ~ "/") | json_encode() | safe }};
+window.__ABOUT_BODY__ = {{ (about.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
 </script>
 <script src="{{ get_url(path="terminal.js") }}" defer></script>
 {% endblock content %}
