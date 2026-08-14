@@ -1,9 +1,26 @@
 (function () {
   var output = document.getElementById("term-output");
   var input = document.getElementById("term-input");
+  var promptEl = document.getElementById("term-prompt");
   var history = [];
   var historyIndex = -1;
   var sessionStart = Date.now();
+  var cwd = "/srv/http";
+
+  var HISTORY_KEY = "term_history";
+  try {
+    var saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    if (Array.isArray(saved)) {
+      history = saved;
+    }
+  } catch (e) {}
+  historyIndex = history.length;
+
+  function saveHistory() {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-200)));
+    } catch (e) {}
+  }
 
   function println(text) {
     var line = document.createElement("div");
@@ -98,6 +115,7 @@
     cat: "cat <file> - print/open a file",
     whoami: "whoami - print info about the current user",
     pwd: "pwd - print working directory",
+    cd: "cd <dir> - change working directory",
     echo: "echo <text> - display a line of text",
     date: "date - display the current date and time",
     neofetch: "neofetch - display system information",
@@ -110,6 +128,7 @@
     head: "head <file> [n] - output the first n words of a file",
     tail: "tail <file> [n] - output the last n words of a file",
     wc: "wc <file> - print word, line, and character counts",
+    stats: "stats - show site statistics",
     uname: "uname [-a] - print system information",
     uptime: "uptime - show how long this session has been running",
     which: "which <command> - locate a command",
@@ -127,6 +146,7 @@
       println("  cat <file>    open a post (or about.md)");
       println("  whoami        about this site");
       println("  pwd           print working directory");
+      println("  cd <dir>      change working directory");
       println("  echo <text>   print text back");
       println("  date          show the current date/time");
       println("  neofetch      show fake system info");
@@ -139,6 +159,7 @@
       println("  head <file>   show the start of a file");
       println("  tail <file>   show the end of a file");
       println("  wc <file>     word/line/char counts");
+      println("  stats         site statistics");
       println("  uname         system info");
       println("  uptime        session uptime");
       println("  which <cmd>   locate a command");
@@ -148,6 +169,8 @@
       println("  exit          close the session");
       println("  clear         clear the screen");
       println("  help          show this message");
+      println("");
+      println("tips: Tab completes commands/files, ctrl+r searches history, && chains commands");
     },
     ls: function () {
       window.__POSTS__.forEach(function (p) {
@@ -176,7 +199,23 @@
       window.location.href = window.__ABOUT_URL__;
     },
     pwd: function () {
-      println("/srv/http");
+      println(cwd);
+    },
+    cd: function (args) {
+      var target = args[0] || "/srv/http";
+      if (target === "posts" && cwd === "/srv/http") {
+        cwd = "/srv/http/posts";
+        return;
+      }
+      if (target === ".." && cwd === "/srv/http/posts") {
+        cwd = "/srv/http";
+        return;
+      }
+      if (target === "/" || target === "~" || target === "/srv/http") {
+        cwd = "/srv/http";
+        return;
+      }
+      println("cd: " + target + ": No such file or directory");
     },
     echo: function (args) {
       println(args.join(" "));
@@ -316,6 +355,13 @@
       var chars = f.body.length;
       println("  " + lines + "  " + words + "  " + chars + "  " + name);
     },
+    stats: function () {
+      var totalWords = 0;
+      window.__POSTS__.forEach(function (p) {
+        totalWords += (p.body || "").split(/\s+/).filter(Boolean).length;
+      });
+      println(window.__POSTS__.length + " posts, " + totalWords + " words total");
+    },
     uname: function (args) {
       if (args[0] === "-a") {
         println("Linux arch 7.1.6-arch1-1 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux");
@@ -378,7 +424,7 @@
     },
   };
 
-  function run(cmdline) {
+  function runSingle(cmdline) {
     var parts = cmdline.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return;
     var name = parts[0];
@@ -390,12 +436,99 @@
     }
   }
 
+  function run(cmdline) {
+    var segments = cmdline.split(/\s*&&\s*/);
+    for (var i = 0; i < segments.length; i++) {
+      if (segments[i].trim().length > 0) {
+        runSingle(segments[i]);
+      }
+    }
+  }
+
+  var searchMode = false;
+  var searchQuery = "";
+  var searchMatch = "";
+  var searchFromIndex = history.length;
+  var preSearchValue = "";
+
+  function updateSearchPrompt() {
+    if (promptEl) {
+      promptEl.textContent = "(reverse-i-search)'" + searchQuery + "': " + searchMatch;
+    }
+  }
+
+  function findMatch(query, fromIndex) {
+    if (!query) return "";
+    for (var i = fromIndex - 1; i >= 0; i--) {
+      if (history[i].indexOf(query) !== -1) {
+        searchFromIndex = i;
+        return history[i];
+      }
+    }
+    return "";
+  }
+
+  function enterSearchMode() {
+    searchMode = true;
+    searchQuery = "";
+    searchMatch = "";
+    searchFromIndex = history.length;
+    preSearchValue = input.value;
+    input.value = "";
+    updateSearchPrompt();
+  }
+
+  function exitSearchMode(restore) {
+    searchMode = false;
+    if (promptEl) {
+      promptEl.textContent = "$";
+    }
+    if (restore) {
+      input.value = preSearchValue;
+    }
+  }
+
   input.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && (e.key === "r" || e.key === "R")) {
+      e.preventDefault();
+      if (!searchMode) {
+        enterSearchMode();
+      } else {
+        searchMatch = findMatch(searchQuery, searchFromIndex);
+        updateSearchPrompt();
+      }
+      return;
+    }
+
+    if (searchMode) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        var toRun = searchMatch || searchQuery;
+        exitSearchMode(false);
+        input.value = "";
+        if (toRun.trim().length > 0) {
+          printEcho(toRun);
+          history.push(toRun);
+          saveHistory();
+          historyIndex = history.length;
+          run(toRun);
+          scrollToBottom();
+        }
+        return;
+      } else if (e.key === "Escape" || (e.ctrlKey && e.key === "g")) {
+        e.preventDefault();
+        exitSearchMode(true);
+        return;
+      }
+      return;
+    }
+
     if (e.key === "Enter") {
       var cmdline = input.value;
       printEcho(cmdline);
       if (cmdline.trim().length > 0) {
         history.push(cmdline);
+        saveHistory();
       }
       historyIndex = history.length;
       run(cmdline);
@@ -419,6 +552,25 @@
     } else if (e.key === "Tab") {
       e.preventDefault();
       handleTabComplete();
+    }
+  });
+
+  input.addEventListener("input", function () {
+    if (searchMode) {
+      searchQuery = input.value;
+      searchFromIndex = history.length;
+      searchMatch = findMatch(searchQuery, searchFromIndex);
+      updateSearchPrompt();
+    }
+  });
+
+  input.addEventListener("paste", function (e) {
+    var clipboard = e.clipboardData || window.clipboardData;
+    var text = clipboard ? clipboard.getData("text") : "";
+    if (text && (text.length > 300 || text.indexOf("\n") !== -1)) {
+      e.preventDefault();
+      println("that's a lot of text -- try 'pastebin' instead of pasting it here.");
+      scrollToBottom();
     }
   });
 
