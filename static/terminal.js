@@ -5,7 +5,6 @@
   var history = [];
   var historyIndex = -1;
   var sessionStart = Date.now();
-  var cwd = "/srv/http";
 
   var HISTORY_KEY = "term_history";
   try {
@@ -39,33 +38,99 @@
     output.scrollTop = output.scrollHeight;
   }
 
-  function findPost(name) {
-    name = name.replace(/\.md$/, "");
-    return window.__POSTS__.find(function (p) {
-      return p.slug === name;
+  // ---------------------------------------------------------------------
+  // virtual filesystem: pure data (files/folders), no command logic here.
+  // ---------------------------------------------------------------------
+  var fs = { type: "dir", children: {} };
+
+  fs.children["about.md"] = {
+    type: "file",
+    title: "whoami",
+    url: window.__ABOUT_URL__,
+    body: window.__ABOUT_BODY__ || "",
+  };
+
+  fs.children["posts"] = { type: "dir", children: {} };
+  window.__POSTS__.forEach(function (p) {
+    fs.children["posts"].children[p.slug + ".md"] = {
+      type: "file",
+      title: p.title,
+      date: p.date,
+      url: p.permalink,
+      body: p.body || "",
+    };
+  });
+
+  var cwdPath = [];
+
+  function resolvePath(pathStr, base) {
+    if (!pathStr || pathStr === ".") return base.slice();
+    if (pathStr === "~" || pathStr === "/") return [];
+    var parts;
+    if (pathStr.charAt(0) === "/") {
+      parts = pathStr.split("/").filter(Boolean);
+    } else {
+      parts = base.concat(pathStr.split("/").filter(Boolean));
+    }
+    var resolved = [];
+    parts.forEach(function (part) {
+      if (part === ".") return;
+      if (part === "..") {
+        resolved.pop();
+        return;
+      }
+      resolved.push(part);
     });
+    return resolved;
   }
 
-  function resolveFile(name) {
-    name = name.replace(/\.md$/, "");
-    if (name === "about") {
-      return { title: "whoami", body: window.__ABOUT_BODY__ || "" };
+  function getNode(pathArr) {
+    var node = fs;
+    for (var i = 0; i < pathArr.length; i++) {
+      if (!node || node.type !== "dir" || !node.children[pathArr[i]]) return null;
+      node = node.children[pathArr[i]];
     }
-    var p = findPost(name);
-    if (p) {
-      return { title: p.title, body: p.body || "" };
-    }
-    return null;
+    return node;
   }
 
-  var FILE_ARG_COMMANDS = ["cat", "head", "tail", "wc"];
+  function basename(pathArr) {
+    return pathArr.length ? pathArr[pathArr.length - 1] : ".";
+  }
 
-  function fileCandidates() {
-    var list = window.__POSTS__.map(function (p) {
-      return p.slug + ".md";
+  function pathToString(pathArr) {
+    return "/srv/http" + (pathArr.length ? "/" + pathArr.join("/") : "");
+  }
+
+  function walk(node, pathArr, cb) {
+    if (node.type === "file") {
+      cb(pathArr, node);
+      return;
+    }
+    Object.keys(node.children)
+      .sort()
+      .forEach(function (name) {
+        walk(node.children[name], pathArr.concat(name), cb);
+      });
+  }
+
+  // ---------------------------------------------------------------------
+  // tab completion
+  // ---------------------------------------------------------------------
+  var FILE_ARG_COMMANDS = ["cat", "head", "tail", "wc", "cd", "ls"];
+
+  function fileCandidates(partial) {
+    var dirPart = "";
+    var slashIdx = partial.lastIndexOf("/");
+    if (slashIdx !== -1) {
+      dirPart = partial.slice(0, slashIdx);
+    }
+    var dirPath = resolvePath(dirPart, cwdPath);
+    var node = getNode(dirPath);
+    if (!node || node.type !== "dir") return [];
+    return Object.keys(node.children).map(function (name) {
+      var prefix = dirPart ? dirPart + "/" : "";
+      return prefix + name + (node.children[name].type === "dir" ? "/" : "");
     });
-    list.push("about.md");
-    return list;
   }
 
   function handleTabComplete() {
@@ -86,7 +151,7 @@
         return;
       }
       prefix = endsWithSpace ? "" : tokens[tokens.length - 1];
-      candidates = fileCandidates().filter(function (f) {
+      candidates = fileCandidates(prefix).filter(function (f) {
         return f.indexOf(prefix) === 0;
       });
       isFirstToken = false;
@@ -100,7 +165,7 @@
         input.value = candidates[0] + " ";
       } else {
         tokens[tokens.length - 1] = candidates[0];
-        input.value = tokens.join(" ") + " ";
+        input.value = tokens.join(" ") + (candidates[0].charAt(candidates[0].length - 1) === "/" ? "" : " ");
       }
     } else {
       printEcho(value);
@@ -109,9 +174,14 @@
     }
   }
 
+  // ---------------------------------------------------------------------
+  // commands: verbs that operate on the filesystem above via
+  // resolvePath/getNode/walk -- no command hardcodes "posts" or
+  // "about.md" directly.
+  // ---------------------------------------------------------------------
   var manual = {
     help: "help - show available commands",
-    ls: "ls - list posts",
+    ls: "ls [dir] - list a directory",
     cat: "cat <file> - print/open a file",
     whoami: "whoami - print info about the current user",
     pwd: "pwd - print working directory",
@@ -142,8 +212,8 @@
   var commands = {
     help: function () {
       println("available commands:");
-      println("  ls            list posts");
-      println("  cat <file>    open a post (or about.md)");
+      println("  ls [dir]      list a directory");
+      println("  cat <file>    open a file");
       println("  whoami        about this site");
       println("  pwd           print working directory");
       println("  cd <dir>      change working directory");
@@ -170,13 +240,32 @@
       println("  clear         clear the screen");
       println("  help          show this message");
       println("");
-      println("tips: Tab completes commands/files, ctrl+r searches history, && chains commands");
+      println("tips: Tab completes commands/paths, ctrl+r searches history, && chains commands");
     },
-    ls: function () {
-      window.__POSTS__.forEach(function (p) {
-        println("-rw-r--r--  " + p.date + "  " + p.slug + ".md");
+    ls: function (args) {
+      var target = args[0] ? resolvePath(args[0], cwdPath) : cwdPath;
+      var node = getNode(target);
+      if (!node) {
+        println("ls: cannot access '" + (args[0] || ".") + "': No such file or directory");
+        return;
+      }
+      if (node.type === "file") {
+        println(basename(target));
+        return;
+      }
+      var names = Object.keys(node.children).sort();
+      if (names.length === 0) {
+        println("(empty)");
+        return;
+      }
+      names.forEach(function (name) {
+        var child = node.children[name];
+        if (child.type === "dir") {
+          println("drwxr-xr-x  " + name + "/");
+        } else {
+          println("-rw-r--r--  " + (child.date || "----------") + "  " + name);
+        }
       });
-      println("-rw-r--r--  ----------  about.md");
     },
     cat: function (args) {
       var name = args[0];
@@ -184,38 +273,37 @@
         println("usage: cat <file>");
         return;
       }
-      if (name === "about.md" || name === "about") {
-        window.location.href = window.__ABOUT_URL__;
+      var resolved = resolvePath(name, cwdPath);
+      var node = getNode(resolved);
+      if (!node) {
+        println("cat: " + name + ": No such file or directory");
         return;
       }
-      var post = findPost(name);
-      if (post) {
-        window.location.href = post.permalink;
+      if (node.type === "dir") {
+        println("cat: " + name + ": Is a directory");
         return;
       }
-      println("cat: " + name + ": No such file or directory");
+      window.location.href = node.url;
     },
     whoami: function () {
       window.location.href = window.__ABOUT_URL__;
     },
     pwd: function () {
-      println(cwd);
+      println(pathToString(cwdPath));
     },
     cd: function (args) {
-      var target = args[0] || "/srv/http";
-      if (target === "posts" && cwd === "/srv/http") {
-        cwd = "/srv/http/posts";
+      var target = args[0] || "~";
+      var resolved = resolvePath(target, cwdPath);
+      var node = getNode(resolved);
+      if (!node) {
+        println("cd: " + target + ": No such file or directory");
         return;
       }
-      if (target === ".." && cwd === "/srv/http/posts") {
-        cwd = "/srv/http";
+      if (node.type !== "dir") {
+        println("cd: " + target + ": Not a directory");
         return;
       }
-      if (target === "/" || target === "~" || target === "/srv/http") {
-        cwd = "/srv/http";
-        return;
-      }
-      println("cd: " + target + ": No such file or directory");
+      cwdPath = resolved;
     },
     echo: function (args) {
       println(args.join(" "));
@@ -254,14 +342,10 @@
         return;
       }
       var matches = [];
-      window.__POSTS__.forEach(function (p) {
-        if ((p.slug + ".md").toLowerCase().indexOf(q) !== -1) {
-          matches.push("./posts/" + p.slug + ".md");
-        }
+      walk(fs, [], function (pathArr) {
+        var full = "./" + pathArr.join("/");
+        if (full.toLowerCase().indexOf(q) !== -1) matches.push(full);
       });
-      if ("about.md".indexOf(q) !== -1) {
-        matches.push("./about.md");
-      }
       if (matches.length === 0) {
         println("find: no matches for '" + q + "'");
         return;
@@ -277,17 +361,10 @@
         return;
       }
       var matches = [];
-      window.__POSTS__.forEach(function (p) {
-        if (
-          p.title.toLowerCase().indexOf(q) !== -1 ||
-          (p.body || "").toLowerCase().indexOf(q) !== -1
-        ) {
-          matches.push(p.slug + ".md");
-        }
+      walk(fs, [], function (pathArr, node) {
+        var haystack = ((node.title || "") + " " + (node.body || "")).toLowerCase();
+        if (haystack.indexOf(q) !== -1) matches.push(pathArr.join("/"));
       });
-      if ((window.__ABOUT_BODY__ || "").toLowerCase().indexOf(q) !== -1) {
-        matches.push("about.md");
-      }
       if (matches.length === 0) {
         println("grep: no matches for '" + q + "'");
         return;
@@ -298,12 +375,18 @@
     },
     tree: function () {
       println(".");
-      println("├── about.md");
-      println("└── posts/");
-      window.__POSTS__.forEach(function (p, i) {
-        var last = i === window.__POSTS__.length - 1;
-        println("    " + (last ? "└── " : "├── ") + p.slug + ".md");
-      });
+      (function printTree(node, prefix) {
+        var names = Object.keys(node.children).sort();
+        names.forEach(function (name, i) {
+          var last = i === names.length - 1;
+          var branch = last ? "└── " : "├── ";
+          var child = node.children[name];
+          println(prefix + branch + name + (child.type === "dir" ? "/" : ""));
+          if (child.type === "dir") {
+            printTree(child, prefix + (last ? "    " : "│   "));
+          }
+        });
+      })(fs, "");
     },
     head: function (args) {
       var name = args[0];
@@ -311,14 +394,14 @@
         println("usage: head <file> [n]");
         return;
       }
-      var n = parseInt(args[1], 10);
-      if (isNaN(n) || n <= 0) n = 20;
-      var f = resolveFile(name);
-      if (!f) {
+      var node = getNode(resolvePath(name, cwdPath));
+      if (!node || node.type !== "file") {
         println("head: " + name + ": No such file or directory");
         return;
       }
-      var words = f.body.split(/\s+/).filter(Boolean);
+      var n = parseInt(args[1], 10);
+      if (isNaN(n) || n <= 0) n = 20;
+      var words = node.body.split(/\s+/).filter(Boolean);
       println(words.slice(0, n).join(" ") + (words.length > n ? " ..." : ""));
     },
     tail: function (args) {
@@ -327,14 +410,14 @@
         println("usage: tail <file> [n]");
         return;
       }
-      var n = parseInt(args[1], 10);
-      if (isNaN(n) || n <= 0) n = 20;
-      var f = resolveFile(name);
-      if (!f) {
+      var node = getNode(resolvePath(name, cwdPath));
+      if (!node || node.type !== "file") {
         println("tail: " + name + ": No such file or directory");
         return;
       }
-      var words = f.body.split(/\s+/).filter(Boolean);
+      var n = parseInt(args[1], 10);
+      if (isNaN(n) || n <= 0) n = 20;
+      var words = node.body.split(/\s+/).filter(Boolean);
       println((words.length > n ? "... " : "") + words.slice(Math.max(0, words.length - n)).join(" "));
     },
     wc: function (args) {
@@ -343,24 +426,26 @@
         println("usage: wc <file>");
         return;
       }
-      var f = resolveFile(name);
-      if (!f) {
+      var node = getNode(resolvePath(name, cwdPath));
+      if (!node || node.type !== "file") {
         println("wc: " + name + ": No such file or directory");
         return;
       }
-      var lines = f.body.split("\n").filter(function (l) {
+      var lines = node.body.split("\n").filter(function (l) {
         return l.trim().length > 0;
       }).length;
-      var words = f.body.split(/\s+/).filter(Boolean).length;
-      var chars = f.body.length;
+      var words = node.body.split(/\s+/).filter(Boolean).length;
+      var chars = node.body.length;
       println("  " + lines + "  " + words + "  " + chars + "  " + name);
     },
     stats: function () {
+      var fileCount = 0;
       var totalWords = 0;
-      window.__POSTS__.forEach(function (p) {
-        totalWords += (p.body || "").split(/\s+/).filter(Boolean).length;
+      walk(fs, [], function (pathArr, node) {
+        fileCount += 1;
+        totalWords += (node.body || "").split(/\s+/).filter(Boolean).length;
       });
-      println(window.__POSTS__.length + " posts, " + totalWords + " words total");
+      println(fileCount + " files, " + totalWords + " words total");
     },
     uname: function (args) {
       if (args[0] === "-a") {
@@ -445,6 +530,9 @@
     }
   }
 
+  // ---------------------------------------------------------------------
+  // ctrl+r reverse history search
+  // ---------------------------------------------------------------------
   var searchMode = false;
   var searchQuery = "";
   var searchMatch = "";
