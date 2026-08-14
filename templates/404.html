@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}404 :: {{ config.title }}{% endblock title %}
+{% block content %}
+<pre>404: No such file or directory</pre>
+<p>the page you're looking for doesn't exist. try <a href="{{ get_url(path="/") }}">going home</a>, or type 'help' in the terminal there.</p>
+{% endblock content %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}status :: {{ config.title }}{% endblock title %}
+{% block content %}
+<h1>status</h1>
+<ul id="status-list">
+  <li>blog: <span id="status-blog">checking...</span></li>
+  <li>pastebin: <span id="status-pastebin">checking...</span></li>
+  <li>guestbook: <span id="status-guestbook">checking...</span></li>
+</ul>
+<p>hits: <span id="hit-count">...</span></p>
+<script>
+function checkService(url, elId) {
+  var el = document.getElementById(elId);
+  fetch(url, { mode: "no-cors" })
+    .then(function () {
+      el.textContent = "up";
+      el.style.color = "var(--accent)";
+    })
+    .catch(function () {
+      el.textContent = "down";
+      el.style.color = "#e05252";
+    });
+}
+checkService("http://100.111.221.80/", "status-blog");
+checkService("http://100.111.221.80:8822/", "status-pastebin");
+checkService("http://100.111.221.80:8833/guestbook", "status-guestbook");
+
+fetch("http://100.111.221.80:8833/hits")
+  .then(function (r) { return r.json(); })
+  .then(function (d) { document.getElementById("hit-count").textContent = d.count; })
+  .catch(function () { document.getElementById("hit-count").textContent = "unknown"; });
+</script>
+{% endblock content %}

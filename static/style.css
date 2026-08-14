@@ -133,3 +133,11 @@ footer.site-footer {
   font-size: inherit;
   caret-color: var(--accent);
 }
+
+.konami-flash {
+  animation: konami-invert 0.15s steps(2) 4;
+}
+
+@keyframes konami-invert {
+  to { filter: invert(1); }
+}

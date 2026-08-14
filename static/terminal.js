@@ -245,6 +245,7 @@
     history: "history - show command history",
     pastebin: "pastebin - open the pastebin",
     github: "github - open my GitHub profile",
+    guestbook: "guestbook - sign the guestbook",
     find: "find <keyword> - search for files by name",
     grep: "grep <keyword> - search file contents for a keyword",
     tree: "tree - list contents of the site in a tree-like format",
@@ -276,6 +277,7 @@
       println("  history       show command history");
       println("  pastebin      open the pastebin");
       println("  github        open my GitHub profile");
+      println("  guestbook     sign the guestbook");
       println("  find <text>   search for files by name");
       println("  grep <text>   search file contents");
       println("  tree          show site structure");
@@ -387,6 +389,9 @@
     },
     github: function () {
       window.location.href = "https://github.com/npcmillionaire";
+    },
+    guestbook: function () {
+      window.location.href = "http://100.111.221.80:8833/guestbook";
     },
     find: function (args) {
       var q = (args[0] || "").toLowerCase();
@@ -715,8 +720,16 @@
     }
   });
 
+  function greeting() {
+    var hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "good morning.";
+    if (hour >= 12 && hour < 18) return "good afternoon.";
+    if (hour >= 18 && hour < 23) return "good evening.";
+    return "3am and you're reading a homelab blog? respect.";
+  }
+
   function printWelcome() {
-    println("welcome to cam@arch -- this is a fake but functional terminal.");
+    println(greeting() + " welcome to cam@arch -- this is a fake but functional terminal.");
     println("type a command and press enter. a few to start with:");
     println("  ls            see what's here");
     println("  cd <dir>      move into whoami/, posts/, music/, cv/, contact/, ...");
@@ -725,6 +738,31 @@
     println("");
     println("tab completes commands/paths, up/down cycles history, ctrl+r searches it, && chains commands.");
   }
+
+  var KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+  var konamiProgress = 0;
+
+  function triggerKonami() {
+    document.body.classList.add("konami-flash");
+    println("↑↑↓↓←→←→ba -- you found it. respect.");
+    scrollToBottom();
+    setTimeout(function () {
+      document.body.classList.remove("konami-flash");
+    }, 1200);
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var expected = KONAMI[konamiProgress];
+    if (e.key === expected) {
+      konamiProgress += 1;
+      if (konamiProgress === KONAMI.length) {
+        konamiProgress = 0;
+        triggerKonami();
+      }
+    } else {
+      konamiProgress = e.key === KONAMI[0] ? 1 : 0;
+    }
+  });
 
   document.getElementById("terminal").addEventListener("click", function () {
     input.focus();
