@@ -115,6 +115,20 @@
     window.scrollTo(0, 0);
   }
 
+  // derives the site root from terminal.js's own script tag rather than
+  // hardcoding a path, so internal nav commands still resolve correctly
+  // under the GitHub Pages mirror's /legitbiz/ subpath.
+  function siteRoot() {
+    var scripts = document.getElementsByTagName("script");
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src;
+      if (src && /terminal\.js(\?.*)?$/.test(src)) {
+        return src.replace(/terminal\.js(\?.*)?$/, "");
+      }
+    }
+    return "/";
+  }
+
   // ---------------------------------------------------------------------
   // pager: full-screen "less"-style viewer for file contents. q/Escape
   // returns to the terminal exactly as it was, like a real pager's
@@ -531,6 +545,7 @@
     pastebin: "pastebin - open the pastebin",
     github: "github - open my GitHub profile",
     guestbook: "guestbook - sign the guestbook",
+    "bin-lookup": "bin-lookup - open the BIN/IIN lookup tool",
     find: "find <keyword> - search for files by name",
     grep: "grep <keyword> - search file contents for a keyword",
     tree: "tree - list contents of the site in a tree-like format",
@@ -565,6 +580,7 @@
       println("  pastebin      open the pastebin");
       println("  github        open my GitHub profile");
       println("  guestbook     sign the guestbook");
+      println("  bin-lookup    open the BIN/IIN lookup tool");
       println("  find <text>   search for files by name");
       println("  grep <text>   search file contents");
       println("  tree          show site structure");
@@ -701,6 +717,9 @@
     },
     guestbook: function () {
       window.location.href = "http://100.111.221.80:8833/guestbook";
+    },
+    "bin-lookup": function () {
+      window.location.href = siteRoot() + "tools/";
     },
     contact: function () {
       enterComposeMode();
