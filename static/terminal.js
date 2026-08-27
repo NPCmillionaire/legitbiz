@@ -249,6 +249,23 @@
   // ---------------------------------------------------------------------
   var fs = { type: "dir", children: {} };
 
+  fs.children[".bash_history"] = {
+    type: "file",
+    title: ".bash_history",
+    body:
+      "cd /srv/http\n" +
+      "zola build\n" +
+      "vim config.toml\n" +
+      ":wq\n" +
+      "rsync -av public/ /srv/http\n" +
+      "sudo make me a sandwich\n" +
+      "man sudo\n" +
+      "rm -rf node_modules\n" +
+      "ping legitbiz.xyz\n" +
+      "history | grep sudo\n" +
+      "# note to self: stop committing at 2am\n",
+  };
+
   fs.children["posts"] = { type: "dir", children: {} };
   window.__POSTS__.forEach(function (p) {
     fs.children["posts"].children[p.slug + ".md"] = {
@@ -274,6 +291,16 @@
         title: "cv",
         url: window.__CV_URL__,
         body: window.__CV_BODY__ || "",
+      },
+      ".plan": {
+        type: "file",
+        title: ".plan",
+        body:
+          "finger(1) is dead but this file doesn't know that yet.\n\n" +
+          "current status: still trying to figure out if the terminal or the\n" +
+          "blog posts are the actual point of this site.\n\n" +
+          "you found this by either guessing the filename or running `ls -a`.\n" +
+          "either way, well done.",
       },
     },
   };
@@ -548,17 +575,25 @@
       println("tips: Tab completes commands/paths, ctrl+r searches history, && chains commands");
     },
     ls: function (args) {
-      var target = args[0] ? resolvePath(args[0], cwdPath) : cwdPath;
+      var showAll = args.indexOf("-a") !== -1;
+      var pathArgs = args.filter(function (a) {
+        return a.charAt(0) !== "-";
+      });
+      var target = pathArgs[0] ? resolvePath(pathArgs[0], cwdPath) : cwdPath;
       var node = getNode(target);
       if (!node) {
-        println("ls: cannot access '" + (args[0] || ".") + "': No such file or directory");
+        println("ls: cannot access '" + (pathArgs[0] || ".") + "': No such file or directory");
         return;
       }
       if (node.type === "file") {
         println(basename(target));
         return;
       }
-      var names = Object.keys(node.children).sort();
+      var names = Object.keys(node.children)
+        .filter(function (name) {
+          return showAll || name.charAt(0) !== ".";
+        })
+        .sort();
       if (names.length === 0) {
         println("(empty)");
         return;
@@ -577,6 +612,13 @@
       var name = args[0];
       if (!name) {
         println("usage: cat <file>");
+        return;
+      }
+      if (/^\/?etc\/passwd\/?$/.test(name)) {
+        println("root:x:0:0:root:/root:/bin/bash");
+        println("cam:x:1000:1000::/home/cam:/bin/zsh");
+        println("");
+        println("nice try.");
         return;
       }
       var resolved = resolvePath(name, cwdPath);
@@ -696,7 +738,11 @@
     tree: function () {
       println(".");
       (function printTree(node, prefix, pathArr) {
-        var names = Object.keys(node.children).sort();
+        var names = Object.keys(node.children)
+          .filter(function (name) {
+            return name.charAt(0) !== ".";
+          })
+          .sort();
         names.forEach(function (name, i) {
           var last = i === names.length - 1;
           var branch = last ? "└── " : "├── ";
@@ -825,11 +871,163 @@
       }, 300);
     },
     sudo: function (args) {
+      if (args.join(" ") === "make me a sandwich") {
+        println("okay.");
+        return;
+      }
       println("cam is not in the sudoers file. This incident will be reported.");
     },
     clear: function () {
       output.innerHTML = "";
       if (currentBlock) currentBlock.innerHTML = "";
+    },
+    rm: function (args) {
+      var flags = args
+        .filter(function (a) {
+          return a.charAt(0) === "-";
+        })
+        .join("");
+      var targets = args.filter(function (a) {
+        return a.charAt(0) !== "-";
+      });
+      var wantsForce = /r/.test(flags) && /f/.test(flags);
+      var targetsRoot = targets.some(function (t) {
+        return t === "/" || t === "/*" || t === "~" || t === "*";
+      });
+      if (wantsForce && targetsRoot) {
+        println("deleting /...");
+        var steps = ["/bin", "/etc", "/home", "/usr", "/var"];
+        steps.forEach(function (s, i) {
+          setTimeout(function () {
+            println("rm: removing " + s);
+            scrollToLatest();
+          }, (i + 1) * 350);
+        });
+        setTimeout(function () {
+          println("...just kidding. nice try though.");
+          scrollToLatest();
+        }, (steps.length + 1) * 350);
+        return;
+      }
+      println("rm: this is a static site. there is nothing to remove.");
+    },
+    xyzzy: function () {
+      println("Nothing happens.");
+    },
+    fortune: function () {
+      var quotes = [
+        "There are only two hard problems in computer science: cache invalidation and naming things.",
+        "It's not a bug, it's an undocumented feature.",
+        "The S in IoT stands for Security.",
+        "99 little bugs in the code, 99 little bugs. take one down, patch it around, 127 little bugs in the code.",
+        "There is no cloud, just someone else's computer.",
+        "chmod -R 777 has never once solved the actual problem.",
+        "weeks of coding can save you hours of planning.",
+        "the only secure system is one that's powered off, unplugged, and buried in a field.",
+      ];
+      println(quotes[Math.floor(Math.random() * quotes.length)]);
+    },
+    cowsay: function (args) {
+      var text = args.join(" ") || "moo";
+      var repeat = function (ch, n) {
+        return new Array(n + 1).join(ch);
+      };
+      println(" " + repeat("_", text.length + 2));
+      println("< " + text + " >");
+      println(" " + repeat("-", text.length + 2));
+      println("        \\   ^__^");
+      println("         \\  (oo)\\_______");
+      println("            (__)\\       )\\/\\");
+      println("                ||----w |");
+      println("                ||     ||");
+    },
+    "42": function () {
+      println("the answer to life, the universe, and everything.");
+    },
+    vim: function () {
+      println("entering vim...");
+      println("type :wq to exit (you can't, there's no vim here)");
+    },
+    id: function () {
+      println("uid=1000(cam) gid=1000(cam) groups=1000(cam),998(wheel),100(users)");
+      println("mostly harmless.");
+    },
+    hunter2: function () {
+      println("look, all I see is *******");
+    },
+    hack: function () {
+      var block = beginBlock();
+      var lines = [
+        "initializing exploit framework...",
+        "scanning ports on 127.0.0.1...",
+        "bypassing firewall...",
+        "cracking encryption (AES-256, this may take a while)...",
+        "decrypting mainframe...",
+        "rerouting through 3 proxies...",
+        "uploading virus...",
+        "ACCESS GRANTED",
+      ];
+      lines.forEach(function (line, i) {
+        setTimeout(function () {
+          println(line);
+          scrollToLatest();
+        }, i * 350);
+      });
+      setTimeout(function () {
+        println("");
+        println("(not really. this is a static site with no backend to hack.)");
+        scrollToLatest();
+      }, lines.length * 350 + 200);
+      endBlock(block);
+    },
+    matrix: function () {
+      document.body.classList.add("matrix-flash");
+      println("wake up...");
+      setTimeout(function () {
+        document.body.classList.remove("matrix-flash");
+      }, 2500);
+    },
+    fingerprint: function () {
+      function canvasHash() {
+        try {
+          var canvas = document.createElement("canvas");
+          var ctx = canvas.getContext("2d");
+          ctx.textBaseline = "top";
+          ctx.font = "14px 'Arial'";
+          ctx.fillStyle = "#f60";
+          ctx.fillRect(0, 0, 100, 20);
+          ctx.fillStyle = "#069";
+          ctx.fillText("fingerprint", 2, 2);
+          var data = canvas.toDataURL();
+          var hash = 0;
+          for (var i = 0; i < data.length; i++) {
+            hash = (hash << 5) - hash + data.charCodeAt(i);
+            hash |= 0;
+          }
+          return (hash >>> 0).toString(16);
+        } catch (e) {
+          return "unavailable";
+        }
+      }
+      var langs = navigator.languages ? navigator.languages.join(", ") : navigator.language;
+      var tz = "unknown";
+      try {
+        tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch (e) {}
+      println("browser fingerprint (client-side only -- nothing leaves this page):");
+      println("  user agent     " + navigator.userAgent);
+      println("  platform       " + (navigator.platform || "unknown"));
+      println("  language(s)    " + langs);
+      println("  screen         " + screen.width + "x" + screen.height + " @ " + (window.devicePixelRatio || 1) + "x, " + screen.colorDepth + "-bit");
+      println("  viewport       " + window.innerWidth + "x" + window.innerHeight);
+      println("  timezone       " + tz + " (UTC" + (-new Date().getTimezoneOffset() / 60) + ")");
+      println("  cpu cores      " + (navigator.hardwareConcurrency || "unknown"));
+      println("  device memory  " + (navigator.deviceMemory ? navigator.deviceMemory + "GB" : "unknown"));
+      println("  cookies        " + (navigator.cookieEnabled ? "enabled" : "disabled"));
+      println("  do-not-track   " + (navigator.doNotTrack || "unspecified"));
+      println("  canvas hash    " + canvasHash());
+      println("");
+      println("this is roughly what every ad network already knows about you.");
     },
     noemie: function () {
       println("                __");
