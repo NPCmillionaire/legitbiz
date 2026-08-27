@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} :: {{ config.title }}{% endblock title %}
+{% block content %}
+<article class="post">
+  <h1>{{ page.title }}</h1>
+  {{ page.content | safe }}
+
+  <p class="tool-disclaimer">Everything below runs client-side in your browser — nothing is sent anywhere. For authorized testing, CTFs, and learning. Don't be an idiot with it.</p>
+
+  <div class="tool-grid">
+
+    <section class="tool-card">
+      <h3>encoder / decoder</h3>
+      <div class="tool-row">
+        <select id="enc-mode">
+          <option value="base64">Base64</option>
+          <option value="base32">Base32</option>
+          <option value="url">URL</option>
+          <option value="html">HTML entities</option>
+          <option value="hex">Hex</option>
+          <option value="binary">Binary</option>
+          <option value="rot13">ROT13 / Caesar</option>
+        </select>
+        <input type="number" id="enc-shift" placeholder="shift" style="display:none">
+      </div>
+      <textarea id="enc-input" rows="3" placeholder="input"></textarea>
+      <div class="tool-row">
+        <button id="enc-encode-btn">encode</button>
+        <button id="enc-decode-btn">decode</button>
+        <button id="enc-copy-btn" class="tool-btn-alt">copy</button>
+      </div>
+      <textarea id="enc-output" rows="3" placeholder="output" readonly></textarea>
+    </section>
+
+    <section class="tool-card">
+      <h3>hash generator</h3>
+      <textarea id="hash-input" rows="3" placeholder="text to hash"></textarea>
+      <div class="tool-row">
+        <button id="hash-btn">hash</button>
+        <button id="hash-copy-btn" class="tool-btn-alt">copy</button>
+      </div>
+      <pre id="hash-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>HMAC generator</h3>
+      <input type="text" id="hmac-msg" placeholder="message">
+      <input type="text" id="hmac-key" placeholder="key">
+      <select id="hmac-algo">
+        <option value="SHA-1">HMAC-SHA1</option>
+        <option value="SHA-256" selected>HMAC-SHA256</option>
+        <option value="SHA-384">HMAC-SHA384</option>
+        <option value="SHA-512">HMAC-SHA512</option>
+      </select>
+      <div class="tool-row">
+        <button id="hmac-btn">compute</button>
+        <button id="hmac-copy-btn" class="tool-btn-alt">copy</button>
+      </div>
+      <pre id="hmac-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>hash identifier</h3>
+      <input type="text" id="hashid-input" placeholder="paste a hash">
+      <div class="tool-row"><button id="hashid-btn">identify</button></div>
+      <pre id="hashid-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>JWT decoder</h3>
+      <textarea id="jwt-input" rows="2" placeholder="eyJhbGciOi...  (not verified, just decoded)"></textarea>
+      <div class="tool-row"><button id="jwt-btn">decode</button></div>
+      <pre id="jwt-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>XOR cipher</h3>
+      <textarea id="xor-input" rows="2" placeholder="text (encode) or hex (decode)"></textarea>
+      <input type="text" id="xor-key" placeholder="key">
+      <select id="xor-mode">
+        <option value="encode">text &rarr; hex</option>
+        <option value="decode">hex &rarr; text</option>
+      </select>
+      <div class="tool-row"><button id="xor-btn">run</button></div>
+      <pre id="xor-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card tool-card-wide">
+      <h3>regex tester</h3>
+      <div class="tool-row">
+        <select id="regex-preset">
+          <option value="">-- presets --</option>
+          <option value="email">email</option>
+          <option value="ipv4">IPv4</option>
+          <option value="url">URL</option>
+          <option value="mac">MAC address</option>
+          <option value="subdomain">subdomain</option>
+        </select>
+        <input type="text" id="regex-flags" placeholder="flags (g default)" style="max-width:8rem">
+      </div>
+      <input type="text" id="regex-pattern" placeholder="pattern">
+      <textarea id="regex-text" rows="3" placeholder="test string"></textarea>
+      <div class="tool-row"><button id="regex-btn">test</button></div>
+      <div id="regex-highlighted" class="tool-output"></div>
+      <pre id="regex-groups" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>CIDR / subnet calculator</h3>
+      <input type="text" id="cidr-input" placeholder="192.168.1.0/24">
+      <div class="tool-row"><button id="cidr-btn">calculate</button></div>
+      <pre id="cidr-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>IP converter</h3>
+      <input type="text" id="ipconv-input" placeholder="10.0.0.1 / 167772161 / 0x0A000001">
+      <div class="tool-row"><button id="ipconv-btn">convert</button></div>
+      <pre id="ipconv-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>user-agent parser</h3>
+      <textarea id="ua-input" rows="2" placeholder="paste a User-Agent string"></textarea>
+      <div class="tool-row">
+        <button id="ua-btn">parse</button>
+        <button id="ua-mine-btn" class="tool-btn-alt">use mine</button>
+      </div>
+      <pre id="ua-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card tool-card-wide">
+      <h3>reverse shell generator</h3>
+      <div class="tool-row">
+        <input type="text" id="revshell-ip" placeholder="attacker IP">
+        <input type="text" id="revshell-port" placeholder="port">
+      </div>
+      <div class="tool-row"><button id="revshell-btn">generate</button></div>
+      <pre id="revshell-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card tool-card-wide">
+      <h3>payload encoder</h3>
+      <textarea id="payload-input" rows="2" placeholder="e.g. &lt;script&gt;alert(1)&lt;/script&gt; or ' OR 1=1--"></textarea>
+      <div class="tool-row"><button id="payload-btn">encode all</button></div>
+      <pre id="payload-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card">
+      <h3>password strength</h3>
+      <input type="text" id="pass-input" placeholder="type a password (nothing is stored)">
+      <pre id="pass-output" class="tool-output"></pre>
+    </section>
+
+    <section class="tool-card tool-card-wide">
+      <h3>wordlist mutator</h3>
+      <textarea id="wordlist-input" rows="3" placeholder="base words, one per line"></textarea>
+      <div class="tool-row tool-checks">
+        <label><input type="checkbox" id="wordlist-leet"> leetspeak</label>
+        <label><input type="checkbox" id="wordlist-nums"> +numbers 0-99</label>
+        <label><input type="checkbox" id="wordlist-years"> +years 1990-2030</label>
+        <label><input type="checkbox" id="wordlist-symbols"> +symbols</label>
+      </div>
+      <div class="tool-row">
+        <button id="wordlist-btn">generate</button>
+        <button id="wordlist-download-btn" class="tool-btn-alt">download .txt</button>
+        <span id="wordlist-count" class="tool-muted"></span>
+      </div>
+      <textarea id="wordlist-output" rows="4" readonly placeholder="generated wordlist"></textarea>
+    </section>
+
+    <section class="tool-card tool-card-wide">
+      <h3>port lookup</h3>
+      <input type="text" id="port-search" placeholder="search port number or service name">
+      <div class="tool-table-wrap">
+        <table class="tool-table">
+          <thead><tr><th>port</th><th>proto</th><th>service</th></tr></thead>
+          <tbody id="port-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tool-card tool-card-wide">
+      <h3>HTTP header analyzer</h3>
+      <textarea id="headers-input" rows="4" placeholder="paste raw response headers, one per line"></textarea>
+      <div class="tool-row"><button id="headers-btn">analyze</button></div>
+      <pre id="headers-output" class="tool-output"></pre>
+    </section>
+
+  </div>
+</article>
+<script src="{{ get_url(path="toolbox.js") }}" defer></script>
+{% endblock content %}

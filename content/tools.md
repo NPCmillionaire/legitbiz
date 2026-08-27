@@ -1,10 +1,11 @@
 +++
 title = "tools"
-template = "page.html"
+template = "tools_app.html"
 path = "tools"
 +++
 
-Stuff I've built or run, mostly for myself.
+Stuff I have built or run, plus a small in-browser toolbox below --
+everything runs client-side, nothing gets sent to a server.
 
 **arch** -- this box. Homelab server running this site, a paste tool, and a
 handful of self-hosted services.
@@ -18,10 +19,10 @@ move.
 
 **test automation and hardware simulators** -- built at Pentair: automation
 for a web/mobile app, and a simulator that stands in for hardware when
-it's not on hand. Can't share the code, but ask if you want to talk shop.
+it is not on hand. Cannot share the code, but ask if you want to talk shop.
 
 **[dread-scraper](https://github.com/NPCmillionaire/dread-scraper)** --
 Python scraper/search tool for Dread, a Tor-hosted forum. Built for
-OSINT digging, not for anything you'd want to explain to HR.
+OSINT digging, not for anything you would want to explain to HR.
 
 More at [github.com/npcmillionaire](https://github.com/npcmillionaire).
