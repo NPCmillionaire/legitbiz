@@ -547,8 +547,6 @@
   // ---------------------------------------------------------------------
   // tab completion
   // ---------------------------------------------------------------------
-  var FILE_ARG_COMMANDS = ["cat", "head", "tail", "wc", "cd", "ls"];
-
   function fileCandidates(partial) {
     var dirPart = "";
     var slashIdx = partial.lastIndexOf("/");
@@ -564,6 +562,24 @@
     });
   }
 
+  // theme names aren't paths, so they get their own candidate list
+  // instead of going through fileCandidates.
+  function themeCandidates() {
+    return THEMES.slice();
+  }
+
+  // which commands take a second-token argument worth completing, and
+  // where their candidate list comes from.
+  var ARG_CANDIDATE_PROVIDERS = {
+    cat: fileCandidates,
+    head: fileCandidates,
+    tail: fileCandidates,
+    wc: fileCandidates,
+    cd: fileCandidates,
+    ls: fileCandidates,
+    theme: themeCandidates,
+  };
+
   function handleTabComplete() {
     var value = input.value;
     var endsWithSpace = /\s$/.test(value);
@@ -578,11 +594,12 @@
       isFirstToken = true;
     } else {
       var cmdName = tokens[0];
-      if (FILE_ARG_COMMANDS.indexOf(cmdName) === -1) {
+      var provider = ARG_CANDIDATE_PROVIDERS[cmdName];
+      if (!provider) {
         return;
       }
       prefix = endsWithSpace ? "" : tokens[tokens.length - 1];
-      candidates = fileCandidates(prefix).filter(function (f) {
+      candidates = provider(prefix).filter(function (f) {
         return f.indexOf(prefix) === 0;
       });
       isFirstToken = false;
