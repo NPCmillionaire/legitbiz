@@ -293,15 +293,11 @@ footer.site-footer {
   to { filter: invert(1); }
 }
 
-.matrix-flash {
-  animation: matrix-tint 2.5s ease-in-out;
-}
-
-@keyframes matrix-tint {
-  0% { filter: none; }
-  10% { filter: brightness(1.15) saturate(3) hue-rotate(70deg); }
-  90% { filter: brightness(1.15) saturate(3) hue-rotate(70deg); }
-  100% { filter: none; }
+.matrix-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
 }
 
 .bio-flex {

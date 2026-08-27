@@ -981,11 +981,42 @@
       endBlock(block);
     },
     matrix: function () {
-      document.body.classList.add("matrix-flash");
-      println("wake up...");
+      var canvas = document.createElement("canvas");
+      canvas.className = "matrix-rain";
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      document.body.appendChild(canvas);
+      var ctx = canvas.getContext("2d");
+
+      var chars = "アイウエオカキクケコサシスセソタチツテト0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      var fontSize = 16;
+      var columns = Math.floor(canvas.width / fontSize);
+      var drops = [];
+      for (var i = 0; i < columns; i++) {
+        drops[i] = Math.random() * -50;
+      }
+
+      function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#3f3";
+        ctx.font = fontSize + "px monospace";
+        for (var i = 0; i < drops.length; i++) {
+          var ch = chars.charAt(Math.floor(Math.random() * chars.length));
+          ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+          drops[i] += 1;
+        }
+      }
+
+      var timer = setInterval(draw, 40);
+      println("wake up, cam...");
       setTimeout(function () {
-        document.body.classList.remove("matrix-flash");
-      }, 2500);
+        clearInterval(timer);
+        canvas.parentNode.removeChild(canvas);
+      }, 5000);
     },
     fingerprint: function () {
       function canvasHash() {
