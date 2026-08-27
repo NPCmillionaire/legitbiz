@@ -660,10 +660,20 @@
     exit: "exit - close the session",
     clear: "clear - clear the terminal screen",
     man: "man <command> - show the manual page for a command",
-    theme: "theme [name] - switch site color theme (default, tokyo-night, dracula, powershell)",
+    theme: "theme [name] - switch site color theme (run with no args to list options)",
   };
 
-  var THEMES = ["default", "tokyo-night", "dracula", "powershell"];
+  var THEMES = [
+    "default",
+    "tokyo-night",
+    "dracula",
+    "powershell",
+    "catppuccin",
+    "nord",
+    "gruvbox",
+    "monokai",
+    "matrix",
+  ];
   var THEME_KEY = "site_theme";
 
   function getCurrentTheme() {
