@@ -25,4 +25,8 @@ it is not on hand. Cannot share the code, but ask if you want to talk shop.
 Python scraper/search tool for Dread, a Tor-hosted forum. Built for
 OSINT digging, not for anything you would want to explain to HR.
 
+**[bin-lookup](https://github.com/NPCmillionaire/bin-lookup)** --
+Local SQLite database of card BINs/IINs (issuer, brand, country), seeded
+from a public ~375k-entry dataset. CLI lookup by BIN or full card number.
+
 More at [github.com/npcmillionaire](https://github.com/npcmillionaire).
