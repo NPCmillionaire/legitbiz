@@ -103,6 +103,65 @@
     return html;
   }
 
+  function printError(text) {
+    var line = document.createElement("div");
+    line.className = "term-err";
+    line.textContent = text;
+    appendLine(line);
+  }
+
+  function printOk(text) {
+    var line = document.createElement("div");
+    line.className = "term-ok";
+    line.textContent = text;
+    appendLine(line);
+  }
+
+  // "label" + "rest" lines, used by neofetch/env-style key/value output.
+  function printKV(label, rest) {
+    var line = document.createElement("div");
+    var l = document.createElement("span");
+    l.className = "term-label";
+    l.textContent = label;
+    line.appendChild(l);
+    line.appendChild(document.createTextNode(rest));
+    appendLine(line);
+  }
+
+  // "  ls [dir]      list a directory" -> command part colored like a
+  // known command, description left plain. Falls back to plain println
+  // if a line doesn't have the "name<gap>description" shape.
+  function printHelpLine(text) {
+    var m = text.match(/^(\s*\S.*?)(\s{2,})(.*)$/);
+    if (!m) {
+      println(text);
+      return;
+    }
+    var line = document.createElement("div");
+    var c = document.createElement("span");
+    c.className = "hl-cmd";
+    c.textContent = m[1];
+    line.appendChild(c);
+    line.appendChild(document.createTextNode(m[2] + m[3]));
+    appendLine(line);
+  }
+
+  // "help - show available commands" -> command name colored, rest plain.
+  function printManLine(text) {
+    var idx = text.indexOf(" - ");
+    if (idx === -1) {
+      println(text);
+      return;
+    }
+    var line = document.createElement("div");
+    var c = document.createElement("span");
+    c.className = "hl-cmd";
+    c.textContent = text.slice(0, idx);
+    line.appendChild(c);
+    line.appendChild(document.createTextNode(text.slice(idx)));
+    appendLine(line);
+  }
+
   function printEcho(cmd) {
     var line = document.createElement("div");
     line.className = "term-echo";
@@ -584,40 +643,64 @@
     exit: "exit - close the session",
     clear: "clear - clear the terminal screen",
     man: "man <command> - show the manual page for a command",
+    theme: "theme [name] - switch site color theme (default, tokyo-night, dracula, powershell)",
   };
+
+  var THEMES = ["default", "tokyo-night", "dracula", "powershell"];
+  var THEME_KEY = "site_theme";
+
+  function getCurrentTheme() {
+    try {
+      return localStorage.getItem(THEME_KEY) || "default";
+    } catch (e) {
+      return "default";
+    }
+  }
+
+  function applyTheme(name) {
+    if (name === "default") {
+      document.documentElement.removeAttribute("data-term-theme");
+    } else {
+      document.documentElement.setAttribute("data-term-theme", name);
+    }
+    try {
+      localStorage.setItem(THEME_KEY, name);
+    } catch (e) {}
+  }
 
   var commands = {
     help: function () {
       println("available commands:");
-      println("  ls [dir]      list a directory");
-      println("  cat <file>    open a file");
-      println("  whoami        about this site");
-      println("  pwd           print working directory");
-      println("  cd <dir>      change working directory");
-      println("  echo <text>   print text back");
-      println("  date          show the current date/time");
-      println("  neofetch      show fake system info");
-      println("  history       show command history");
-      println("  pastebin      open the pastebin");
-      println("  github        open my GitHub profile");
-      println("  guestbook     sign the guestbook");
-      println("  find <text>   search for files by name");
-      println("  grep <text>   search file contents");
-      println("  tree          show site structure");
-      println("  head <file>   show the start of a file");
-      println("  tail <file>   show the end of a file");
-      println("  wc <file>     word/line/char counts");
-      println("  stats         site statistics");
-      println("  uname         system info");
-      println("  uptime        session uptime");
-      println("  which <cmd>   locate a command");
-      println("  env           print environment variables");
-      println("  alias         list aliases");
-      println("  contact       write me a message from right here");
-      println("  man <cmd>     show manual page for a command");
-      println("  exit          close the session");
-      println("  clear         clear the screen");
-      println("  help          show this message");
+      printHelpLine("  ls [dir]      list a directory");
+      printHelpLine("  cat <file>    open a file");
+      printHelpLine("  whoami        about this site");
+      printHelpLine("  pwd           print working directory");
+      printHelpLine("  cd <dir>      change working directory");
+      printHelpLine("  echo <text>   print text back");
+      printHelpLine("  date          show the current date/time");
+      printHelpLine("  neofetch      show fake system info");
+      printHelpLine("  history       show command history");
+      printHelpLine("  pastebin      open the pastebin");
+      printHelpLine("  github        open my GitHub profile");
+      printHelpLine("  guestbook     sign the guestbook");
+      printHelpLine("  find <text>   search for files by name");
+      printHelpLine("  grep <text>   search file contents");
+      printHelpLine("  tree          show site structure");
+      printHelpLine("  head <file>   show the start of a file");
+      printHelpLine("  tail <file>   show the end of a file");
+      printHelpLine("  wc <file>     word/line/char counts");
+      printHelpLine("  stats         site statistics");
+      printHelpLine("  uname         system info");
+      printHelpLine("  uptime        session uptime");
+      printHelpLine("  which <cmd>   locate a command");
+      printHelpLine("  env           print environment variables");
+      printHelpLine("  alias         list aliases");
+      printHelpLine("  contact       write me a message from right here");
+      printHelpLine("  theme [name]  switch color theme");
+      printHelpLine("  man <cmd>     show manual page for a command");
+      printHelpLine("  exit          close the session");
+      printHelpLine("  clear         clear the screen");
+      printHelpLine("  help          show this message");
       println("");
       println("tips: Tab completes commands/paths, ctrl+r searches history, && chains commands");
     },
@@ -629,7 +712,7 @@
       var target = pathArgs[0] ? resolvePath(pathArgs[0], cwdPath) : cwdPath;
       var node = getNode(target);
       if (!node) {
-        println("ls: cannot access '" + (pathArgs[0] || ".") + "': No such file or directory");
+        printError("ls: cannot access '" + (pathArgs[0] || ".") + "': No such file or directory");
         return;
       }
       if (node.type === "file") {
@@ -671,11 +754,11 @@
       var resolved = resolvePath(name, cwdPath);
       var node = getNode(resolved);
       if (!node) {
-        println("cat: " + name + ": No such file or directory");
+        printError("cat: " + name + ": No such file or directory");
         return;
       }
       if (node.type === "dir") {
-        println("cat: " + name + ": Is a directory");
+        printError("cat: " + name + ": Is a directory");
         return;
       }
       if (resolved.join("/") === "whoami/about.md") {
@@ -695,11 +778,11 @@
       var resolved = resolvePath(target, cwdPath);
       var node = getNode(resolved);
       if (!node) {
-        println("cd: " + target + ": No such file or directory");
+        printError("cd: " + target + ": No such file or directory");
         return;
       }
       if (node.type !== "dir") {
-        println("cd: " + target + ": Not a directory");
+        printError("cd: " + target + ": Not a directory");
         return;
       }
       cwdPath = resolved;
@@ -712,13 +795,13 @@
       println(new Date().toString());
     },
     neofetch: function () {
-      println("cam@arch");
+      printOk("cam@arch");
       println("--------");
-      println("OS: Arch Linux x86_64");
-      println("Host: homelab");
-      println("Shell: terminal.js");
-      println("Theme: catppuccin-mocha (terminal)");
-      println("Terminal: this very box you are looking at");
+      printKV("OS: ", "Arch Linux x86_64");
+      printKV("Host: ", "homelab");
+      printKV("Shell: ", "terminal.js");
+      printKV("Theme: ", getCurrentTheme());
+      printKV("Terminal: ", "this very box you are looking at");
     },
     history: function () {
       if (history.length === 0) {
@@ -761,7 +844,7 @@
         if (full.toLowerCase().indexOf(q) !== -1) matches.push(pathArr);
       });
       if (matches.length === 0) {
-        println("find: no matches for '" + q + "'");
+        printError("find: no matches for '" + q + "'");
         return;
       }
       matches.forEach(function (pathArr) {
@@ -780,7 +863,7 @@
         if (haystack.indexOf(q) !== -1) matches.push(pathArr);
       });
       if (matches.length === 0) {
-        println("grep: no matches for '" + q + "'");
+        printError("grep: no matches for '" + q + "'");
         return;
       }
       matches.forEach(function (pathArr) {
@@ -824,7 +907,7 @@
       }
       var node = getNode(resolvePath(name, cwdPath));
       if (!node || node.type !== "file") {
-        println("head: " + name + ": No such file or directory");
+        printError("head: " + name + ": No such file or directory");
         return;
       }
       var n = parseInt(args[1], 10);
@@ -840,7 +923,7 @@
       }
       var node = getNode(resolvePath(name, cwdPath));
       if (!node || node.type !== "file") {
-        println("tail: " + name + ": No such file or directory");
+        printError("tail: " + name + ": No such file or directory");
         return;
       }
       var n = parseInt(args[1], 10);
@@ -856,7 +939,7 @@
       }
       var node = getNode(resolvePath(name, cwdPath));
       if (!node || node.type !== "file") {
-        println("wc: " + name + ": No such file or directory");
+        printError("wc: " + name + ": No such file or directory");
         return;
       }
       var lines = node.body.split("\n").filter(function (l) {
@@ -897,18 +980,33 @@
       if (Object.prototype.hasOwnProperty.call(commands, name)) {
         println("/usr/bin/" + name);
       } else {
-        println(name + ": not found");
+        printError(name + ": not found");
       }
     },
     env: function () {
-      println("USER=cam");
-      println("SHELL=/bin/zsh");
-      println("HOME=/home/cam");
-      println("HOSTNAME=arch");
-      println("TERM=xterm-256color");
+      printKV("USER=", "cam");
+      printKV("SHELL=", "/bin/zsh");
+      printKV("HOME=", "/home/cam");
+      printKV("HOSTNAME=", "arch");
+      printKV("TERM=", "xterm-256color");
     },
     alias: function () {
       println("no aliases defined");
+    },
+    theme: function (args) {
+      var name = (args[0] || "").toLowerCase();
+      if (!name) {
+        println("current theme: " + getCurrentTheme());
+        println("available: " + THEMES.join(", "));
+        println("usage: theme <name>");
+        return;
+      }
+      if (THEMES.indexOf(name) === -1) {
+        printError("theme: unknown theme '" + name + "' -- try: " + THEMES.join(", "));
+        return;
+      }
+      applyTheme(name);
+      printOk("theme set to " + name + ".");
     },
     man: function (args) {
       var name = args[0];
@@ -917,9 +1015,9 @@
         return;
       }
       if (manual[name]) {
-        println(manual[name]);
+        printManLine(manual[name]);
       } else {
-        println("No manual entry for " + name);
+        printError("No manual entry for " + name);
       }
     },
     exit: function () {
@@ -931,10 +1029,10 @@
     },
     sudo: function (args) {
       if (args.join(" ") === "make me a sandwich") {
-        println("okay.");
+        printOk("okay.");
         return;
       }
-      println("cam is not in the sudoers file. This incident will be reported.");
+      printError("cam is not in the sudoers file. This incident will be reported.");
     },
     clear: function () {
       output.innerHTML = "";
@@ -1024,7 +1122,6 @@
         "decrypting mainframe...",
         "rerouting through 3 proxies...",
         "uploading virus...",
-        "ACCESS GRANTED",
       ];
       lines.forEach(function (line, i) {
         setTimeout(function () {
@@ -1032,6 +1129,10 @@
           scrollToLatest();
         }, i * 350);
       });
+      setTimeout(function () {
+        printOk("ACCESS GRANTED");
+        scrollToLatest();
+      }, lines.length * 350);
       setTimeout(function () {
         println("");
         println("(not really. this is a static site with no backend to hack.)");
@@ -1233,7 +1334,7 @@
     if (Object.prototype.hasOwnProperty.call(commands, name)) {
       commands[name](args);
     } else {
-      println(name + ": command not found");
+      printError(name + ": command not found");
     }
   }
 
@@ -1321,7 +1422,7 @@
 
     if (typeof emailjs === "undefined") {
       var failBlock = beginBlock();
-      println("mail client didn't load -- email me directly at npcmillionaire@pm.me");
+      printError("mail client didn't load -- email me directly at npcmillionaire@pm.me");
       endBlock(failBlock);
       scrollToLatest();
       return;
@@ -1333,13 +1434,13 @@
     }).then(
       function () {
         var okBlock = beginBlock();
-        println("sent -- thanks, I'll get back to you.");
+        printOk("sent -- thanks, I'll get back to you.");
         endBlock(okBlock);
         scrollToLatest();
       },
       function () {
         var errBlock = beginBlock();
-        println("send failed -- email me directly at npcmillionaire@pm.me");
+        printError("send failed -- email me directly at npcmillionaire@pm.me");
         endBlock(errBlock);
         scrollToLatest();
       }

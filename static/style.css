@@ -298,6 +298,55 @@ footer.site-footer {
   outline: none;
 }
 
+.term-err { color: var(--err); }
+.term-ok { color: var(--accent); font-weight: bold; }
+.term-label { color: var(--flag); }
+
+/* ---------------------------------------------------------------------
+   color themes -- switched at runtime via the `theme` command, which
+   sets data-term-theme on <html> and persists it to localStorage.
+   Site-wide (not just the terminal), since every page shares these
+   same custom properties.
+   --------------------------------------------------------------------- */
+html[data-term-theme="tokyo-night"] {
+  --bg: #1a1b26;
+  --bg-raised: #24283b;
+  --fg: #c0caf5;
+  --muted: #565f89;
+  --accent: #9ece6a;
+  --border: #292e42;
+  --dir: #7aa2f7;
+  --err: #f7768e;
+  --flag: #7dcfff;
+  --str: #e0af68;
+}
+
+html[data-term-theme="dracula"] {
+  --bg: #282a36;
+  --bg-raised: #343746;
+  --fg: #f8f8f2;
+  --muted: #6272a4;
+  --accent: #50fa7b;
+  --border: #44475a;
+  --dir: #bd93f9;
+  --err: #ff5555;
+  --flag: #8be9fd;
+  --str: #f1fa8c;
+}
+
+html[data-term-theme="powershell"] {
+  --bg: #012456;
+  --bg-raised: #1f3c88;
+  --fg: #eeedf0;
+  --muted: #9aa5ce;
+  --accent: #29b8db;
+  --border: #2d4ea3;
+  --dir: #4ec9b0;
+  --err: #ff6161;
+  --flag: #ffd866;
+  --str: #ce9178;
+}
+
 .pager {
   display: none;
   position: fixed;
