@@ -26,13 +26,37 @@
   }
 
   function copyToClipboard(text, btn) {
-    navigator.clipboard.writeText(text).then(function () {
+    function flash() {
       if (btn) {
         var orig = btn.textContent;
         btn.textContent = "copied";
         setTimeout(function () { btn.textContent = orig; }, 1200);
       }
-    }).catch(function () {});
+    }
+    // navigator.clipboard only exists in a secure context (HTTPS or
+    // localhost) -- falls back to the old execCommand trick on plain
+    // HTTP hosts (e.g. the arch staging box) where it's undefined.
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(flash).catch(function () {
+        legacyCopy(text, flash);
+      });
+    } else {
+      legacyCopy(text, flash);
+    }
+  }
+
+  function legacyCopy(text, onSuccess) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      if (document.execCommand("copy") && onSuccess) onSuccess();
+    } catch (e) {}
+    document.body.removeChild(ta);
   }
 
   function wireCopy(btnId, sourceId) {
@@ -238,16 +262,25 @@
   function initHasher() {
     var btn = $("hash-btn");
     if (!btn) return;
+    var subtleOk = !!(window.crypto && window.crypto.subtle);
     btn.addEventListener("click", async function () {
       var val = $("hash-input").value;
       var out = $("hash-output");
       out.textContent = "hashing...";
       var lines = [];
       lines.push("md5    " + md5(val));
-      lines.push("sha-1  " + await subtleHash("SHA-1", val));
-      lines.push("sha-256 " + await subtleHash("SHA-256", val));
-      lines.push("sha-384 " + await subtleHash("SHA-384", val));
-      lines.push("sha-512 " + await subtleHash("SHA-512", val));
+      if (subtleOk) {
+        try {
+          lines.push("sha-1  " + await subtleHash("SHA-1", val));
+          lines.push("sha-256 " + await subtleHash("SHA-256", val));
+          lines.push("sha-384 " + await subtleHash("SHA-384", val));
+          lines.push("sha-512 " + await subtleHash("SHA-512", val));
+        } catch (e) {
+          lines.push("(sha-* failed: " + e.message + ")");
+        }
+      } else {
+        lines.push("(sha-1/256/384/512 need a secure context -- https or localhost. works on the live site.)");
+      }
       out.textContent = lines.join("\n");
     });
     wireCopy("hash-copy-btn", "hash-output");
@@ -264,6 +297,10 @@
       var key = $("hmac-key").value;
       var algo = $("hmac-algo").value;
       var out = $("hmac-output");
+      if (!(window.crypto && window.crypto.subtle)) {
+        out.textContent = "HMAC needs a secure context -- https or localhost. works on the live site.";
+        return;
+      }
       try {
         var cryptoKey = await crypto.subtle.importKey(
           "raw", strToUtf8Bytes(key), { name: "HMAC", hash: algo }, false, ["sign"]
