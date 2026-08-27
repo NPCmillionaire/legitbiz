@@ -746,6 +746,161 @@
     });
   }
 
+  // ---------------------------------------------------------------------
+  // 17. directory / file brute-forcer (gobuster-lite)
+  //
+  // Runs entirely as browser fetch() calls against whatever target URL
+  // you give it -- there's no server on this end relaying anything.
+  // That means it's bound by the same CORS rules as any other page JS:
+  // it gets real status codes back from same-origin targets and from
+  // servers/APIs that opt into permissive CORS, and a generic network
+  // error for everything else (reported as "blocked", not "missing").
+  // ---------------------------------------------------------------------
+  var DEFAULT_WORDLIST = [
+    "admin", "administrator", "api", "api/v1", "assets", "backup", "backups",
+    ".git", ".git/config", ".env", ".htaccess", "config", "config.php",
+    "dashboard", "db", "debug", "dev", "docs", "download", "downloads",
+    "images", "img", "index", "index.php", "install", "js", "css", "login",
+    "logout", "old", "phpinfo.php", "private", "public", "register",
+    "robots.txt", "scripts", "secret", "server-status", "sitemap.xml",
+    "static", "staging", "storage", "temp", "test", "tmp", "upload",
+    "uploads", "user", "users", "wp-admin", "wp-content", "wp-login.php"
+  ];
+
+  function classifyProbe(status, type) {
+    if (type === "opaqueredirect") return "redirect";
+    if (type === "error" || type === "timeout") return "blocked";
+    if (status === 401 || status === 403) return "protected";
+    if (status >= 200 && status < 300) return "hit";
+    if (status >= 300 && status < 400) return "redirect";
+    if (status === 404) return "miss";
+    if (status >= 500) return "servererr";
+    return "other";
+  }
+
+  function probePath(base, path, signal) {
+    var url = base.replace(/\/+$/, "") + "/" + path.replace(/^\/+/, "");
+    var fetchPromise = fetch(url, { method: "GET", redirect: "manual", signal: signal, cache: "no-store" })
+      .then(function (res) {
+        return { path: path, status: res.type === "opaqueredirect" ? null : res.status, type: res.type };
+      })
+      .catch(function (err) {
+        if (err.name === "AbortError") throw err;
+        return { path: path, status: null, type: "error" };
+      });
+    var timeoutPromise = new Promise(function (resolve) {
+      setTimeout(function () { resolve({ path: path, status: null, type: "timeout" }); }, 8000);
+    });
+    return Promise.race([fetchPromise, timeoutPromise]);
+  }
+
+  function initBuster() {
+    var startBtn = $("buster-start-btn");
+    if (!startBtn) return;
+    var stopBtn = $("buster-stop-btn");
+    var wordlistInput = $("buster-wordlist");
+    var targetInput = $("buster-target");
+    var extInput = $("buster-ext");
+    var concurrencySel = $("buster-concurrency");
+    var resultsBody = $("buster-results-body");
+    var statusEl = $("buster-status");
+    var abortCtrl = null;
+
+    $("buster-default-btn").addEventListener("click", function () {
+      wordlistInput.value = DEFAULT_WORDLIST.join("\n");
+    });
+
+    stopBtn.addEventListener("click", function () {
+      if (abortCtrl) abortCtrl.abort();
+    });
+
+    startBtn.addEventListener("click", function () {
+      var target = targetInput.value.trim();
+      if (!target) {
+        statusEl.textContent = "enter a target URL first";
+        return;
+      }
+      if (!/^https?:\/\//i.test(target)) target = "https://" + target;
+
+      var words = wordlistInput.value.split("\n").map(function (w) { return w.trim(); }).filter(Boolean);
+      if (words.length === 0) words = DEFAULT_WORDLIST.slice();
+      var exts = extInput.value.split(",").map(function (e) { return e.trim(); }).filter(Boolean);
+
+      var queue = [];
+      words.forEach(function (w) {
+        queue.push(w);
+        exts.forEach(function (e) { queue.push(w + (e.charAt(0) === "." ? e : "." + e)); });
+      });
+
+      if (queue.length > 4000) {
+        statusEl.textContent = "that's " + queue.length + " requests -- trim the wordlist/extensions (max 4000) so this doesn't hang the tab";
+        return;
+      }
+
+      resultsBody.innerHTML = "";
+      var counts = { hit: 0, redirect: 0, protected: 0, miss: 0, blocked: 0, servererr: 0, other: 0 };
+      var done = 0;
+      var concurrency = parseInt(concurrencySel.value, 10) || 5;
+
+      abortCtrl = new AbortController();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      statusEl.textContent = "scanning 0 / " + queue.length + "...";
+
+      var idx = 0;
+      var active = 0;
+
+      new Promise(function (resolve) {
+        function pump() {
+          if (abortCtrl.signal.aborted) {
+            if (active === 0) resolve();
+            return;
+          }
+          if (idx >= queue.length) {
+            if (active === 0) resolve();
+            return;
+          }
+          while (active < concurrency && idx < queue.length) {
+            (function (path) {
+              active++;
+              probePath(target, path, abortCtrl.signal).then(function (result) {
+                active--;
+                done++;
+                var cls = classifyProbe(result.status, result.type);
+                counts[cls] = (counts[cls] || 0) + 1;
+                if (cls !== "miss" && cls !== "blocked") {
+                  var row = document.createElement("tr");
+                  row.className = "buster-" + cls;
+                  row.innerHTML =
+                    "<td>/" + escapeHtml(path) + "</td><td>" +
+                    (result.status !== null ? result.status : result.type) +
+                    "</td><td>" + cls + "</td>";
+                  resultsBody.appendChild(row);
+                }
+                statusEl.textContent = "scanning " + done + " / " + queue.length +
+                  "  (" + counts.hit + " hit, " + counts.protected + " protected, " +
+                  counts.redirect + " redirect, " + counts.blocked + " blocked)";
+                pump();
+              });
+            })(queue[idx++]);
+          }
+        }
+        pump();
+      }).then(function () {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        var summary = (abortCtrl.signal.aborted ? "stopped" : "done") +
+          " -- " + done + "/" + queue.length + " checked, " + counts.hit + " hit, " +
+          counts.protected + " protected, " + counts.redirect + " redirect, " +
+          counts.blocked + " blocked/CORS, " + counts.miss + " 404";
+        if (counts.blocked > done * 0.5) {
+          summary += "\nmost requests were blocked -- this only works reliably against same-origin targets or CORS-permissive servers/APIs, not arbitrary third-party sites.";
+        }
+        statusEl.textContent = summary;
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initEncoder();
     initHasher();
@@ -763,5 +918,6 @@
     initWordlist();
     initPortLookup();
     initHeaderAnalyzer();
+    initBuster();
   });
 })();

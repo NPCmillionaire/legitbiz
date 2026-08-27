@@ -181,6 +181,37 @@
     </section>
 
     <section class="tool-card tool-card-wide">
+      <h3>directory / file brute-forcer</h3>
+      <p class="tool-note">gobuster-lite -- runs as real fetch() requests straight from your
+        browser to whatever target you give it, so it's bound by CORS like any other page
+        script: real status codes for same-origin or CORS-permissive targets, "blocked" for
+        everything else. Not a substitute for real gobuster/ffuf from a terminal.</p>
+      <input type="text" id="buster-target" placeholder="https://target.example (or same-origin path)">
+      <div class="tool-row">
+        <input type="text" id="buster-ext" placeholder="extensions, e.g. .php,.bak,.zip" style="flex:1">
+        <select id="buster-concurrency">
+          <option value="1">1 at a time</option>
+          <option value="3">3 at a time</option>
+          <option value="5" selected>5 at a time</option>
+          <option value="10">10 at a time</option>
+        </select>
+      </div>
+      <textarea id="buster-wordlist" rows="4" placeholder="wordlist, one path per line (leave empty to use the built-in list)"></textarea>
+      <div class="tool-row">
+        <button id="buster-default-btn" class="tool-btn-alt">load default wordlist</button>
+        <button id="buster-start-btn">start</button>
+        <button id="buster-stop-btn" disabled>stop</button>
+      </div>
+      <pre id="buster-status" class="tool-output"></pre>
+      <div class="tool-table-wrap">
+        <table class="tool-table">
+          <thead><tr><th>path</th><th>status</th><th>type</th></tr></thead>
+          <tbody id="buster-results-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tool-card tool-card-wide">
       <h3>HTTP header analyzer</h3>
       <textarea id="headers-input" rows="4" placeholder="paste raw response headers, one per line"></textarea>
       <div class="tool-row"><button id="headers-btn">analyze</button></div>

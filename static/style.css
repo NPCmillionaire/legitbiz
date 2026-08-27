@@ -641,3 +641,15 @@ html[data-term-theme="matrix"] {
   padding: 0.3rem 0.6rem;
   border-bottom: 1px solid var(--border);
 }
+
+.tool-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.buster-hit td:nth-child(2) { color: var(--accent); font-weight: bold; }
+.buster-protected td:nth-child(2) { color: var(--str); font-weight: bold; }
+.buster-redirect td:nth-child(2) { color: var(--flag); }
+.buster-servererr td:nth-child(2) { color: var(--err); }
+.buster-other td:nth-child(2) { color: var(--dir); }
