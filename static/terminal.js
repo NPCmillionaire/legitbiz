@@ -21,22 +21,228 @@
     } catch (e) {}
   }
 
+  // ---------------------------------------------------------------------
+  // output ordering: newest command block goes on top, like scrolling a
+  // real terminal up to see the past. Lines *within* one command's output
+  // still need to read top-to-bottom, so each command's lines are built
+  // into a detached "block" first, and the whole block is prepended once
+  // the command finishes -- only whole blocks reorder, not individual
+  // lines inside them.
+  // ---------------------------------------------------------------------
+  var currentBlock = null;
+
+  function beginBlock() {
+    var block = document.createElement("div");
+    currentBlock = block;
+    return block;
+  }
+
+  function endBlock(block) {
+    output.insertBefore(block, output.firstChild);
+    currentBlock = null;
+  }
+
+  function appendLine(line) {
+    if (currentBlock) {
+      currentBlock.appendChild(line);
+    } else {
+      output.insertBefore(line, output.firstChild);
+    }
+  }
+
   function println(text) {
     var line = document.createElement("div");
     line.textContent = text;
-    output.appendChild(line);
+    appendLine(line);
   }
 
   function printEcho(cmd) {
     var line = document.createElement("div");
     line.textContent = "$ " + cmd;
     line.className = "term-echo";
-    output.appendChild(line);
+    appendLine(line);
   }
 
-  function scrollToBottom() {
-    output.scrollTop = output.scrollHeight;
+  // clickable file-path line, used by ls/find/grep/tree so clicking a
+  // listed file types+runs "cat <path>" instead of requiring it be typed.
+  function printFileLink(prefix, name, fullPath, suffix) {
+    var line = document.createElement("div");
+    if (prefix) line.appendChild(document.createTextNode(prefix));
+    var span = document.createElement("span");
+    span.className = "term-file";
+    span.textContent = name;
+    span.tabIndex = 0;
+    span.setAttribute("role", "button");
+    span.addEventListener("click", function () {
+      typeAndRun("cat " + fullPath);
+    });
+    span.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        typeAndRun("cat " + fullPath);
+      }
+    });
+    line.appendChild(span);
+    if (suffix) line.appendChild(document.createTextNode(suffix));
+    appendLine(line);
   }
+
+  // clickable directory line, used by ls -- clicking a listed directory
+  // cd's into it and lists it, mirroring printFileLink's cat-on-click.
+  function printDirLink(prefix, name, fullPath, suffix) {
+    var line = document.createElement("div");
+    if (prefix) line.appendChild(document.createTextNode(prefix));
+    var span = document.createElement("span");
+    span.className = "term-file";
+    span.textContent = name;
+    span.tabIndex = 0;
+    span.setAttribute("role", "button");
+    span.addEventListener("click", function () {
+      typeAndRun("cd " + fullPath + " && ls");
+    });
+    span.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        typeAndRun("cd " + fullPath + " && ls");
+      }
+    });
+    line.appendChild(span);
+    if (suffix) line.appendChild(document.createTextNode(suffix));
+    appendLine(line);
+  }
+
+  function scrollToLatest() {
+    window.scrollTo(0, 0);
+  }
+
+  // ---------------------------------------------------------------------
+  // pager: full-screen "less"-style viewer for file contents. q/Escape
+  // returns to the terminal exactly as it was, like a real pager's
+  // alternate-screen restore.
+  // ---------------------------------------------------------------------
+  var pagerMode = false;
+  var pagerEl = document.createElement("div");
+  pagerEl.className = "pager";
+  pagerEl.tabIndex = -1;
+  var pagerBody = document.createElement("div");
+  pagerBody.className = "pager-body";
+  var pagerStatus = document.createElement("div");
+  pagerStatus.className = "pager-status";
+  pagerEl.appendChild(pagerBody);
+  pagerEl.appendChild(pagerStatus);
+  document.body.appendChild(pagerEl);
+
+  function updatePagerStatus(label) {
+    var max = pagerBody.scrollHeight - pagerBody.clientHeight;
+    var pct = max <= 0 ? 100 : Math.round((pagerBody.scrollTop / max) * 100);
+    pagerStatus.textContent = label + " -- " + (max <= 0 ? "ALL" : pct + "%") + " -- q/esc to quit --";
+  }
+
+  function openPager(label, text) {
+    pagerBody.textContent = text;
+    pagerBody.scrollTop = 0;
+    pagerMode = true;
+    pagerEl.style.display = "flex";
+    updatePagerStatus(label);
+    pagerEl.focus();
+    pagerEl.__label = label;
+  }
+
+  // like openPager, but for the one view (whoami) that needs an actual
+  // <img> and a real link instead of plain text -- buildFn appends
+  // whatever DOM it needs directly into the (cleared) pager body.
+  function openPagerRich(label, buildFn) {
+    pagerBody.textContent = "";
+    buildFn(pagerBody);
+    pagerBody.scrollTop = 0;
+    pagerMode = true;
+    pagerEl.style.display = "flex";
+    updatePagerStatus(label);
+    pagerEl.focus();
+    pagerEl.__label = label;
+  }
+
+  function showAbout() {
+    openPagerRich("whoami", function (body) {
+      var flex = document.createElement("div");
+      flex.className = "bio-flex";
+      if (window.__ABOUT_IMG__) {
+        var img = document.createElement("img");
+        img.className = "avatar";
+        img.src = window.__ABOUT_IMG__;
+        img.alt = "cam";
+        flex.appendChild(img);
+      }
+      var copy = document.createElement("div");
+      copy.className = "bio-copy";
+      copy.textContent = window.__ABOUT_BODY__ || "(empty)";
+      flex.appendChild(copy);
+      body.appendChild(flex);
+
+      var cvLine = document.createElement("div");
+      cvLine.className = "pager-cv-line";
+      cvLine.appendChild(document.createTextNode("Full work history: "));
+      var cvLink = document.createElement("a");
+      cvLink.className = "term-file";
+      cvLink.href = window.__CV_URL__ || "/cv/";
+      cvLink.textContent = window.__CV_URL__ || "/cv/";
+      cvLine.appendChild(cvLink);
+      body.appendChild(cvLine);
+    });
+  }
+
+  function closePager() {
+    pagerMode = false;
+    pagerEl.style.display = "none";
+    input.focus();
+  }
+
+  pagerBody.addEventListener("scroll", function () {
+    updatePagerStatus(pagerEl.__label);
+  });
+
+  pagerEl.addEventListener("keydown", function (e) {
+    var line = 24;
+    var page = pagerBody.clientHeight - line;
+    switch (e.key) {
+      case "q":
+      case "Escape":
+        e.preventDefault();
+        closePager();
+        break;
+      case "ArrowDown":
+      case "j":
+        e.preventDefault();
+        pagerBody.scrollTop += line;
+        break;
+      case "ArrowUp":
+      case "k":
+        e.preventDefault();
+        pagerBody.scrollTop -= line;
+        break;
+      case " ":
+      case "PageDown":
+      case "f":
+        e.preventDefault();
+        pagerBody.scrollTop += page;
+        break;
+      case "b":
+      case "PageUp":
+        e.preventDefault();
+        pagerBody.scrollTop -= page;
+        break;
+      case "g":
+      case "Home":
+        e.preventDefault();
+        pagerBody.scrollTop = 0;
+        break;
+      case "G":
+      case "End":
+        e.preventDefault();
+        pagerBody.scrollTop = pagerBody.scrollHeight;
+        break;
+    }
+  });
 
   // ---------------------------------------------------------------------
   // virtual filesystem: pure data (files/folders), no command logic here.
@@ -63,6 +269,12 @@
         url: window.__ABOUT_URL__,
         body: window.__ABOUT_BODY__ || "",
       },
+      "resume.md": {
+        type: "file",
+        title: "cv",
+        url: window.__CV_URL__,
+        body: window.__CV_BODY__ || "",
+      },
     },
   };
 
@@ -87,17 +299,38 @@
         url: window.__THINGS_URL__,
         body: window.__THINGS_BODY__ || "",
       },
-    },
-  };
-
-  fs.children["cv"] = {
-    type: "dir",
-    children: {
-      "resume.md": {
-        type: "file",
-        title: "cv",
-        url: window.__CV_URL__,
-        body: window.__CV_BODY__ || "",
+      "tools": {
+        type: "dir",
+        children: {
+          "readme.md": {
+            type: "file",
+            title: "tools",
+            url: window.__TOOLS_URL__,
+            body: window.__TOOLS_BODY__ || "",
+          },
+        },
+      },
+      "pastebin": {
+        type: "dir",
+        children: {
+          "readme.md": {
+            type: "file",
+            title: "pastebin",
+            url: window.__PASTEBIN_URL__,
+            body: window.__PASTEBIN_BODY__ || "",
+          },
+        },
+      },
+      "otherStuff": {
+        type: "dir",
+        children: {
+          "readme.md": {
+            type: "file",
+            title: "otherStuff",
+            url: window.__OTHERSTUFF_URL__,
+            body: window.__OTHERSTUFF_BODY__ || "",
+          },
+        },
       },
     },
   };
@@ -152,6 +385,18 @@
 
   function pathToString(pathArr) {
     return "/srv/http" + (pathArr.length ? "/" + pathArr.join("/") : "");
+  }
+
+  function displayPath(pathArr) {
+    return "~" + (pathArr.length ? "/" + pathArr.join("/") : "");
+  }
+
+  function updatePrompt() {
+    if (!promptEl) return;
+    promptEl.innerHTML =
+      '<span class="prompt-user">cam@arch</span> ' +
+      '<span class="prompt-path">' + displayPath(cwdPath) + "</span> " +
+      '<span class="prompt-arrow">$</span>';
   }
 
   function walk(node, pathArr, cb) {
@@ -221,9 +466,11 @@
         input.value = tokens.join(" ") + (candidates[0].charAt(candidates[0].length - 1) === "/" ? "" : " ");
       }
     } else {
+      var block = beginBlock();
       printEcho(value);
       println(candidates.join("  "));
-      scrollToBottom();
+      endBlock(block);
+      scrollToLatest();
     }
   }
 
@@ -258,6 +505,8 @@
     which: "which <command> - locate a command",
     env: "env - print environment variables",
     alias: "alias - list defined aliases",
+    contact: "contact - write me a message from right here",
+    mail: "mail - alias for contact",
     exit: "exit - close the session",
     clear: "clear - clear the terminal screen",
     man: "man <command> - show the manual page for a command",
@@ -290,6 +539,7 @@
       println("  which <cmd>   locate a command");
       println("  env           print environment variables");
       println("  alias         list aliases");
+      println("  contact       write me a message from right here");
       println("  man <cmd>     show manual page for a command");
       println("  exit          close the session");
       println("  clear         clear the screen");
@@ -315,10 +565,11 @@
       }
       names.forEach(function (name) {
         var child = node.children[name];
+        var fullPath = "/" + target.concat(name).join("/");
         if (child.type === "dir") {
-          println("drwxr-xr-x  " + name + "/");
+          printDirLink("drwxr-xr-x  ", name, fullPath, "/");
         } else {
-          println("-rw-r--r--  " + (child.date || "----------") + "  " + name);
+          printFileLink("-rw-r--r--  " + (child.date || "----------") + "  ", name, fullPath);
         }
       });
     },
@@ -338,10 +589,14 @@
         println("cat: " + name + ": Is a directory");
         return;
       }
-      window.location.href = node.url;
+      if (resolved.join("/") === "whoami/about.md") {
+        showAbout();
+        return;
+      }
+      openPager(node.title || basename(resolved), node.body || "(empty)");
     },
     whoami: function () {
-      window.location.href = window.__ABOUT_URL__;
+      showAbout();
     },
     pwd: function () {
       println(pathToString(cwdPath));
@@ -359,6 +614,7 @@
         return;
       }
       cwdPath = resolved;
+      updatePrompt();
     },
     echo: function (args) {
       println(args.join(" "));
@@ -393,6 +649,12 @@
     guestbook: function () {
       window.location.href = "http://100.111.221.80:8833/guestbook";
     },
+    contact: function () {
+      enterComposeMode();
+    },
+    mail: function () {
+      enterComposeMode();
+    },
     find: function (args) {
       var q = (args[0] || "").toLowerCase();
       if (!q) {
@@ -402,14 +664,14 @@
       var matches = [];
       walk(fs, [], function (pathArr) {
         var full = "./" + pathArr.join("/");
-        if (full.toLowerCase().indexOf(q) !== -1) matches.push(full);
+        if (full.toLowerCase().indexOf(q) !== -1) matches.push(pathArr);
       });
       if (matches.length === 0) {
         println("find: no matches for '" + q + "'");
         return;
       }
-      matches.forEach(function (m) {
-        println(m);
+      matches.forEach(function (pathArr) {
+        printFileLink("./" + pathArr.slice(0, -1).join("/") + (pathArr.length > 1 ? "/" : ""), basename(pathArr), "/" + pathArr.join("/"));
       });
     },
     grep: function (args) {
@@ -421,30 +683,33 @@
       var matches = [];
       walk(fs, [], function (pathArr, node) {
         var haystack = ((node.title || "") + " " + (node.body || "")).toLowerCase();
-        if (haystack.indexOf(q) !== -1) matches.push(pathArr.join("/"));
+        if (haystack.indexOf(q) !== -1) matches.push(pathArr);
       });
       if (matches.length === 0) {
         println("grep: no matches for '" + q + "'");
         return;
       }
-      matches.forEach(function (m) {
-        println(m + ": match");
+      matches.forEach(function (pathArr) {
+        printFileLink("", pathArr.join("/"), "/" + pathArr.join("/"), ": match");
       });
     },
     tree: function () {
       println(".");
-      (function printTree(node, prefix) {
+      (function printTree(node, prefix, pathArr) {
         var names = Object.keys(node.children).sort();
         names.forEach(function (name, i) {
           var last = i === names.length - 1;
           var branch = last ? "└── " : "├── ";
           var child = node.children[name];
-          println(prefix + branch + name + (child.type === "dir" ? "/" : ""));
+          var childPath = pathArr.concat(name);
           if (child.type === "dir") {
-            printTree(child, prefix + (last ? "    " : "│   "));
+            println(prefix + branch + name + "/");
+            printTree(child, prefix + (last ? "    " : "│   "), childPath);
+          } else {
+            printFileLink(prefix + branch, name, "/" + childPath.join("/"));
           }
         });
-      })(fs, "");
+      })(fs, "", []);
     },
     head: function (args) {
       var name = args[0];
@@ -564,8 +829,144 @@
     },
     clear: function () {
       output.innerHTML = "";
+      if (currentBlock) currentBlock.innerHTML = "";
+    },
+    noemie: function () {
+      println("                __");
+      println("             .-'  |");
+      println("            /   <\\|");
+      println("           /     \\'");
+      println("           |_.- o-o");
+      println("           / C  -._)\\");
+      println("          /',        |");
+      println("         |   `-,_,__,'");
+      println("         (,,)====[_]=|");
+      println("           '.   ____/");
+      println("            | -|-|_");
+      println("            |____)_)    [daddy loves you forever]");
+      println("");
+      println("daddy luvs u gnome!");
     },
   };
+
+  // ---------------------------------------------------------------------
+  // live autosuggest: a dropdown of matching commands shown while typing
+  // the first token, ranked by how often *you've* used them (falling back
+  // to a curated "popular first" order for anything unused this session).
+  // Mouse click fills the command in -- it doesn't run it, since most of
+  // these still need an argument (cat <file>, cd <dir>, ...).
+  // ---------------------------------------------------------------------
+  var POPULAR_ORDER = ["ls", "cat", "cd", "help", "whoami", "tree", "find", "grep", "contact", "github", "pastebin", "guestbook", "history", "man", "clear"];
+
+  var suggestEl = document.createElement("div");
+  suggestEl.className = "term-suggest";
+  var inputLine = document.querySelector(".term-input-line");
+  if (inputLine) inputLine.appendChild(suggestEl);
+
+  var suggestItems = [];
+  var suggestIndex = -1;
+
+  function highlightSuggestion(index) {
+    suggestItems.forEach(function (it, i) {
+      if (i === index) {
+        it.el.classList.add("term-suggest-item-active");
+        it.el.scrollIntoView({ block: "nearest" });
+      } else {
+        it.el.classList.remove("term-suggest-item-active");
+      }
+    });
+  }
+
+  function rankedCommandNames() {
+    var freqMap = {};
+    history.forEach(function (h) {
+      var n = h.trim().split(/\s+/)[0];
+      if (n) freqMap[n] = (freqMap[n] || 0) + 1;
+    });
+    return Object.keys(commands).sort(function (a, b) {
+      var fa = freqMap[a] || 0;
+      var fb = freqMap[b] || 0;
+      if (fa !== fb) return fb - fa;
+      var ia = POPULAR_ORDER.indexOf(a);
+      var ib = POPULAR_ORDER.indexOf(b);
+      if (ia === -1) ia = POPULAR_ORDER.length;
+      if (ib === -1) ib = POPULAR_ORDER.length;
+      if (ia !== ib) return ia - ib;
+      return a < b ? -1 : a > b ? 1 : 0;
+    });
+  }
+
+  function hideSuggestions() {
+    suggestEl.style.display = "none";
+    suggestEl.innerHTML = "";
+    suggestItems = [];
+    suggestIndex = -1;
+  }
+
+  function updateSuggestions() {
+    var value = input.value;
+    if (value.length === 0 || /\s/.test(value)) {
+      hideSuggestions();
+      return;
+    }
+    var matches = rankedCommandNames()
+      .filter(function (name) {
+        return name.indexOf(value) === 0 && name !== value;
+      })
+      .slice(0, 6);
+    if (matches.length === 0) {
+      hideSuggestions();
+      return;
+    }
+    suggestEl.innerHTML = "";
+    suggestItems = [];
+    suggestIndex = -1;
+    matches.forEach(function (name) {
+      var item = document.createElement("div");
+      item.className = "term-suggest-item";
+      var matched = document.createElement("span");
+      matched.className = "term-suggest-match";
+      matched.textContent = value;
+      var rest = document.createElement("span");
+      rest.className = "term-suggest-rest";
+      rest.textContent = name.slice(value.length);
+      item.appendChild(matched);
+      item.appendChild(rest);
+      if (manual[name]) {
+        var descEl = document.createElement("span");
+        descEl.className = "term-suggest-desc";
+        var dashIdx = manual[name].indexOf("-");
+        descEl.textContent = " " + (dashIdx !== -1 ? manual[name].slice(dashIdx) : manual[name]);
+        item.appendChild(descEl);
+      }
+      // mousedown (not click) fires before the input blurs, so the fill
+      // happens before focus would otherwise move away.
+      item.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        input.value = name + " ";
+        hideSuggestions();
+        input.focus();
+      });
+      suggestEl.appendChild(item);
+      suggestItems.push({ el: item, name: name });
+    });
+    suggestEl.style.display = "block";
+  }
+
+  // Tab (and Shift+Tab) cycles the highlighted suggestion and fills it into
+  // the input, like a real shell's menu-complete -- repeated Tab presses
+  // step through candidates instead of just completing a single match.
+  function cycleSuggestion(backward) {
+    if (suggestItems.length === 0) return false;
+    if (backward) {
+      suggestIndex = suggestIndex <= 0 ? suggestItems.length - 1 : suggestIndex - 1;
+    } else {
+      suggestIndex = (suggestIndex + 1) % suggestItems.length;
+    }
+    highlightSuggestion(suggestIndex);
+    input.value = suggestItems[suggestIndex].name + " ";
+    return true;
+  }
 
   function runSingle(cmdline) {
     var parts = cmdline.trim().split(/\s+/).filter(Boolean);
@@ -626,18 +1027,116 @@
 
   function exitSearchMode(restore) {
     searchMode = false;
-    if (promptEl) {
-      promptEl.textContent = "$";
-    }
+    updatePrompt();
     if (restore) {
       input.value = preSearchValue;
     }
   }
 
+  // ---------------------------------------------------------------------
+  // contact: two-step compose mode (reply-to email, then message) that
+  // hijacks the input line the same way ctrl+r search does below, then
+  // ships the message via EmailJS straight from the browser -- no
+  // backend on this box handles mail, so the send call is client-side.
+  // ---------------------------------------------------------------------
+  var composeMode = null; // null | "email" | "message"
+  var composeEmail = "";
+
+  function enterComposeMode() {
+    hideSuggestions();
+    composeMode = "email";
+    composeEmail = "";
+    input.value = "";
+    if (promptEl) promptEl.textContent = "your email (optional, enter to skip) ▸";
+  }
+
+  function exitComposeMode() {
+    composeMode = null;
+    input.value = "";
+    updatePrompt();
+  }
+
+  function sendContactMessage(email, message) {
+    var block = beginBlock();
+    println("sending...");
+    endBlock(block);
+    scrollToLatest();
+
+    if (typeof emailjs === "undefined") {
+      var failBlock = beginBlock();
+      println("mail client didn't load -- email me directly at npcmillionaire@pm.me");
+      endBlock(failBlock);
+      scrollToLatest();
+      return;
+    }
+
+    emailjs.send("service_27aacyq", "template_erogod8", {
+      reply_to: email || "(none given)",
+      message: message,
+    }).then(
+      function () {
+        var okBlock = beginBlock();
+        println("sent -- thanks, I'll get back to you.");
+        endBlock(okBlock);
+        scrollToLatest();
+      },
+      function () {
+        var errBlock = beginBlock();
+        println("send failed -- email me directly at npcmillionaire@pm.me");
+        endBlock(errBlock);
+        scrollToLatest();
+      }
+    );
+  }
+
   input.addEventListener("keydown", function (e) {
+    if (composeMode) {
+      if (e.key === "Escape" || (e.ctrlKey && (e.key === "c" || e.key === "C"))) {
+        e.preventDefault();
+        var cancelBlock = beginBlock();
+        println("cancelled.");
+        endBlock(cancelBlock);
+        exitComposeMode();
+        scrollToLatest();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (composeMode === "email") {
+          composeEmail = input.value.trim();
+          var emailBlock = beginBlock();
+          println("> " + (composeEmail || "(skipped)"));
+          endBlock(emailBlock);
+          composeMode = "message";
+          input.value = "";
+          if (promptEl) promptEl.textContent = "message (enter to send, ctrl+c to cancel) ▸";
+          scrollToLatest();
+        } else if (composeMode === "message") {
+          var msg = input.value.trim();
+          var msgBlock = beginBlock();
+          println("> " + (msg || "(empty)"));
+          endBlock(msgBlock);
+          if (!msg) {
+            var emptyBlock = beginBlock();
+            println("nothing to send -- cancelled.");
+            endBlock(emptyBlock);
+            exitComposeMode();
+          } else {
+            var email = composeEmail;
+            exitComposeMode();
+            sendContactMessage(email, msg);
+          }
+          scrollToLatest();
+        }
+        return;
+      }
+      return;
+    }
+
     if (e.ctrlKey && (e.key === "r" || e.key === "R")) {
       e.preventDefault();
       if (!searchMode) {
+        hideSuggestions();
         enterSearchMode();
       } else {
         searchMatch = findMatch(searchQuery, searchFromIndex);
@@ -653,12 +1152,14 @@
         exitSearchMode(false);
         input.value = "";
         if (toRun.trim().length > 0) {
+          var searchBlock = beginBlock();
           printEcho(toRun);
           history.push(toRun);
           saveHistory();
           historyIndex = history.length;
           run(toRun);
-          scrollToBottom();
+          endBlock(searchBlock);
+          scrollToLatest();
         }
         return;
       } else if (e.key === "Escape" || (e.ctrlKey && e.key === "g")) {
@@ -671,6 +1172,7 @@
 
     if (e.key === "Enter") {
       var cmdline = input.value;
+      var block = beginBlock();
       printEcho(cmdline);
       if (cmdline.trim().length > 0) {
         history.push(cmdline);
@@ -678,13 +1180,16 @@
       }
       historyIndex = history.length;
       run(cmdline);
+      endBlock(block);
       input.value = "";
-      scrollToBottom();
+      hideSuggestions();
+      scrollToLatest();
     } else if (e.key === "ArrowUp") {
       if (historyIndex > 0) {
         historyIndex -= 1;
         input.value = history[historyIndex];
       }
+      hideSuggestions();
       e.preventDefault();
     } else if (e.key === "ArrowDown") {
       if (historyIndex < history.length - 1) {
@@ -694,10 +1199,16 @@
         historyIndex = history.length;
         input.value = "";
       }
+      hideSuggestions();
       e.preventDefault();
     } else if (e.key === "Tab") {
       e.preventDefault();
+      if (cycleSuggestion(e.shiftKey)) {
+        return;
+      }
       handleTabComplete();
+    } else if (e.key === "Escape") {
+      hideSuggestions();
     }
   });
 
@@ -707,7 +1218,9 @@
       searchFromIndex = history.length;
       searchMatch = findMatch(searchQuery, searchFromIndex);
       updateSearchPrompt();
+      return;
     }
+    updateSuggestions();
   });
 
   input.addEventListener("paste", function (e) {
@@ -716,7 +1229,7 @@
     if (text && (text.length > 300 || text.indexOf("\n") !== -1)) {
       e.preventDefault();
       println("that's a lot of text -- try 'pastebin' instead of pasting it here.");
-      scrollToBottom();
+      scrollToLatest();
     }
   });
 
@@ -729,14 +1242,16 @@
   }
 
   function printWelcome() {
+    var block = beginBlock();
     println(greeting() + " welcome to cam@arch -- this is a fake but functional terminal.");
     println("type a command and press enter. a few to start with:");
     println("  ls            see what's here");
-    println("  cd <dir>      move into whoami/, posts/, music/, cv/, contact/, ...");
+    println("  cd <dir>      move into whoami/, posts/, music/, contact/, ...");
     println("  cat <file>    open a file");
     println("  help          full command list");
     println("");
     println("tab completes commands/paths, up/down cycles history, ctrl+r searches it, && chains commands.");
+    endBlock(block);
   }
 
   var KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
@@ -745,13 +1260,14 @@
   function triggerKonami() {
     document.body.classList.add("konami-flash");
     println("↑↑↓↓←→←→ba -- you found it. respect.");
-    scrollToBottom();
+    scrollToLatest();
     setTimeout(function () {
       document.body.classList.remove("konami-flash");
     }, 1200);
   }
 
   document.addEventListener("keydown", function (e) {
+    if (pagerMode) return;
     var expected = KONAMI[konamiProgress];
     if (e.key === expected) {
       konamiProgress += 1;
@@ -764,10 +1280,64 @@
     }
   });
 
+  // ---------------------------------------------------------------------
+  // header nav: clicking a link types its command into the terminal
+  // and runs it, instead of doing a normal navigation.
+  // ---------------------------------------------------------------------
+  function typeAndRun(cmdline, opts) {
+    opts = opts || {};
+    if (pagerMode) closePager();
+    if (opts.reset) {
+      output.innerHTML = "";
+    }
+    hideSuggestions();
+    input.value = "";
+    input.focus();
+    var i = 0;
+    var typer = setInterval(function () {
+      input.value += cmdline.charAt(i);
+      i += 1;
+      if (i >= cmdline.length) {
+        clearInterval(typer);
+        setTimeout(function () {
+          var block = beginBlock();
+          printEcho(cmdline);
+          history.push(cmdline);
+          saveHistory();
+          historyIndex = history.length;
+          run(cmdline);
+          endBlock(block);
+          input.value = "";
+          scrollToLatest();
+        }, 150);
+      }
+    }, 35);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".site-nav a[data-cmd], .prompt[data-cmd]"), function (link) {
+    link.style.cursor = "pointer";
+    link.addEventListener("click", function (e) {
+      var cmd = link.getAttribute("data-cmd");
+      if (!cmd) return;
+      e.preventDefault();
+      typeAndRun(cmd, { reset: true });
+    });
+  });
+
   document.getElementById("terminal").addEventListener("click", function () {
+    if (pagerMode) return;
     input.focus();
   });
 
+  updatePrompt();
   printWelcome();
   input.focus();
+
+  // pages like /contact set this before loading terminal.js so landing
+  // there drops you straight into the command instead of an empty prompt.
+  if (window.__AUTORUN__) {
+    setTimeout(function () {
+      typeAndRun(window.__AUTORUN__, { reset: false });
+    }, 200);
+  }
 })();

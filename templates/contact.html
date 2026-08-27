@@ -12,7 +12,7 @@
 <div class="terminal-window">
   <div class="terminal-titlebar">
     <span class="tb-dots"><span class="tb-dot tb-red"></span><span class="tb-dot tb-yellow"></span><span class="tb-dot tb-green"></span></span>
-    <span class="tb-title">cam@arch — zsh</span>
+    <span class="tb-title">cam@arch — contact</span>
   </div>
   <div class="terminal" id="terminal">
     <div class="term-input-line">
@@ -23,14 +23,7 @@
   </div>
 </div>
 <noscript>
-<ul class="post-list">
-  {% for page in posts.pages %}
-  <li>
-    <span class="date">{{ page.date | date(format="%Y-%m-%d") }}</span>
-    <a href="{{ page.permalink }}">{{ page.title }}</a>
-  </li>
-  {% endfor %}
-</ul>
+<p>JavaScript is off, so the terminal can't run -- email me directly at npcmillionaire@pm.me.</p>
 </noscript>
 <script>
 window.__POSTS__ = [
@@ -61,6 +54,7 @@ window.__PASTEBIN_URL__ = {{ (get_url(path="pastebin") ~ "/") | json_encode() | 
 window.__PASTEBIN_BODY__ = {{ (pastebin_page.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
 window.__OTHERSTUFF_URL__ = {{ (get_url(path="otherStuff") ~ "/") | json_encode() | safe }};
 window.__OTHERSTUFF_BODY__ = {{ (other_stuff.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__AUTORUN__ = "contact";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
