@@ -17,7 +17,10 @@
   <div class="terminal" id="terminal">
     <div class="term-input-line">
       <span class="term-prompt" id="term-prompt">$</span>
-      <input type="text" id="term-input" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+      <div class="term-input-wrap">
+        <div class="term-input-highlight" id="term-input-highlight" aria-hidden="true"></div>
+        <input type="text" id="term-input" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+      </div>
     </div>
     <div class="term-output" id="term-output"></div>
   </div>

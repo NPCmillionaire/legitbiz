@@ -2,6 +2,7 @@
   var output = document.getElementById("term-output");
   var input = document.getElementById("term-input");
   var promptEl = document.getElementById("term-prompt");
+  var highlightEl = document.getElementById("term-input-highlight");
   var history = [];
   var historyIndex = -1;
   var sessionStart = Date.now();
@@ -56,10 +57,56 @@
     appendLine(line);
   }
 
+  // ---------------------------------------------------------------------
+  // syntax highlighting: tokenizes a command line into colored spans --
+  // first word colored green/red for known/unknown command, quoted
+  // strings, dashed flags, and && operators each get their own color.
+  // Used both for the live input overlay and for printed echo/history
+  // lines, so typed and re-displayed commands look the same.
+  // ---------------------------------------------------------------------
+  function escapeHtml(s) {
+    return s.replace(/[&<>]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+    });
+  }
+
+  function highlightCmdline(str) {
+    if (!str) return "";
+    var html = "";
+    str.split(/(\s*&&\s*)/).forEach(function (seg) {
+      if (/^\s*&&\s*$/.test(seg)) {
+        html += '<span class="hl-op">' + escapeHtml(seg) + "</span>";
+        return;
+      }
+      var re = /(\s+)|("[^"]*"?|'[^']*'?)|(--?[^\s]+)|([^\s]+)/g;
+      var m, isFirst = true;
+      while ((m = re.exec(seg)) !== null) {
+        if (m[1]) {
+          html += escapeHtml(m[0]);
+        } else if (m[2]) {
+          html += '<span class="hl-str">' + escapeHtml(m[0]) + "</span>";
+          isFirst = false;
+        } else if (m[3]) {
+          html += '<span class="hl-flag">' + escapeHtml(m[0]) + "</span>";
+          isFirst = false;
+        } else {
+          if (isFirst) {
+            var known = Object.prototype.hasOwnProperty.call(commands, m[0]);
+            html += '<span class="' + (known ? "hl-cmd" : "hl-err") + '">' + escapeHtml(m[0]) + "</span>";
+          } else {
+            html += escapeHtml(m[0]);
+          }
+          isFirst = false;
+        }
+      }
+    });
+    return html;
+  }
+
   function printEcho(cmd) {
     var line = document.createElement("div");
-    line.textContent = "$ " + cmd;
     line.className = "term-echo";
+    line.innerHTML = '<span class="hl-prompt">$ </span>' + highlightCmdline(cmd);
     appendLine(line);
   }
 
@@ -93,7 +140,7 @@
     var line = document.createElement("div");
     if (prefix) line.appendChild(document.createTextNode(prefix));
     var span = document.createElement("span");
-    span.className = "term-file";
+    span.className = "term-dir";
     span.textContent = name;
     span.tabIndex = 0;
     span.setAttribute("role", "button");
@@ -679,7 +726,12 @@
         return;
       }
       history.forEach(function (cmd, i) {
-        println("  " + (i + 1) + "  " + cmd);
+        var line = document.createElement("div");
+        line.appendChild(document.createTextNode("  " + (i + 1) + "  "));
+        var span = document.createElement("span");
+        span.innerHTML = highlightCmdline(cmd);
+        line.appendChild(span);
+        appendLine(line);
       });
     },
     pastebin: function () {
@@ -749,7 +801,14 @@
           var child = node.children[name];
           var childPath = pathArr.concat(name);
           if (child.type === "dir") {
-            println(prefix + branch + name + "/");
+            var dirLine = document.createElement("div");
+            dirLine.appendChild(document.createTextNode(prefix + branch));
+            var dirSpan = document.createElement("span");
+            dirSpan.className = "term-dir";
+            dirSpan.style.cursor = "default";
+            dirSpan.textContent = name + "/";
+            dirLine.appendChild(dirSpan);
+            appendLine(dirLine);
             printTree(child, prefix + (last ? "    " : "│   "), childPath);
           } else {
             printFileLink(prefix + branch, name, "/" + childPath.join("/"));
@@ -981,42 +1040,11 @@
       endBlock(block);
     },
     matrix: function () {
-      var canvas = document.createElement("canvas");
-      canvas.className = "matrix-rain";
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      document.body.appendChild(canvas);
-      var ctx = canvas.getContext("2d");
-
-      var chars = "アイウエオカキクケコサシスセソタチツテト0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      var fontSize = 16;
-      var columns = Math.floor(canvas.width / fontSize);
-      var drops = [];
-      for (var i = 0; i < columns; i++) {
-        drops[i] = Math.random() * -50;
-      }
-
-      function draw() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#3f3";
-        ctx.font = fontSize + "px monospace";
-        for (var i = 0; i < drops.length; i++) {
-          var ch = chars.charAt(Math.floor(Math.random() * chars.length));
-          ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
-          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-          }
-          drops[i] += 1;
-        }
-      }
-
-      var timer = setInterval(draw, 40);
-      println("wake up, cam...");
+      document.body.classList.add("matrix-flash");
+      println("wake up...");
       setTimeout(function () {
-        clearInterval(timer);
-        canvas.parentNode.removeChild(canvas);
-      }, 5000);
+        document.body.classList.remove("matrix-flash");
+      }, 2500);
     },
     fingerprint: function () {
       function canvasHash() {
@@ -1557,6 +1585,27 @@
     if (pagerMode) return;
     input.focus();
   });
+
+  // ---------------------------------------------------------------------
+  // live input syntax highlighting: input.value is the source of truth,
+  // rendered transparent so only the caret shows -- a positioned overlay
+  // mirrors it in color. Polled via rAF instead of patched into every
+  // input.value assignment (history recall, tab-complete, typeAndRun's
+  // char-by-char typing, ...) since there are too many of those to keep
+  // in sync by hand reliably.
+  // ---------------------------------------------------------------------
+  var lastHighlightedValue = null;
+  function updateHighlightOverlay() {
+    if (!highlightEl) return;
+    var v = input.value;
+    if (v === lastHighlightedValue) return;
+    lastHighlightedValue = v;
+    highlightEl.innerHTML = highlightCmdline(v);
+  }
+  (function highlightLoop() {
+    updateHighlightOverlay();
+    requestAnimationFrame(highlightLoop);
+  })();
 
   updatePrompt();
   printWelcome();
