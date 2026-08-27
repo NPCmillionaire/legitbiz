@@ -30,6 +30,9 @@ jobs:
           curl -sL https://github.com/getzola/zola/releases/download/v0.23.3/zola-v0.23.3-x86_64-unknown-linux-gnu.tar.gz | tar -xz
           sudo mv zola /usr/local/bin/zola
 
+      - name: Use Pages-specific favicon
+        run: cp static/favicon-pages.svg static/favicon.svg
+
       - name: Build with Zola
         run: zola build --base-url "${{ steps.pages.outputs.base_url }}"
 
