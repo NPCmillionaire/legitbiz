@@ -87,6 +87,22 @@
     appendLine(line);
   }
 
+  // clickable external link line, used by pastebin's result -- opens in a
+  // new tab instead of running a fake-fs command, since the target isn't
+  // part of this site.
+  function printExternalLink(prefix, url) {
+    var line = document.createElement("div");
+    if (prefix) line.appendChild(document.createTextNode(prefix));
+    var a = document.createElement("a");
+    a.href = url;
+    a.textContent = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "term-file";
+    line.appendChild(a);
+    appendLine(line);
+  }
+
   // clickable directory line, used by ls -- clicking a listed directory
   // cd's into it and lists it, mirroring printFileLink's cat-on-click.
   function printDirLink(prefix, name, fullPath, suffix) {
@@ -710,7 +726,7 @@
       });
     },
     pastebin: function () {
-      window.location.href = "http://100.111.221.80:8822/";
+      enterPasteMode();
     },
     github: function () {
       window.location.href = "https://github.com/npcmillionaire";
@@ -1348,7 +1364,137 @@
     );
   }
 
+  // ---------------------------------------------------------------------
+  // pastebin: drops an actual <textarea> into the output (the single-line
+  // #term-input can't hold newlines, which is also why pasting a big
+  // block into it gets redirected here -- see the "paste" listener
+  // below), then posts it same-origin through /paste-api/ (Apache
+  // reverse-proxies that to rustypaste on :8822 so the browser fetch
+  // isn't cross-origin) and drops focus back on the real prompt either
+  // way, success or cancel.
+  // ---------------------------------------------------------------------
+  var pasteMode = false;
+  var pasteTextarea = null;
+
+  function exitPasteModeUI() {
+    pasteMode = false;
+    pasteTextarea = null;
+    input.disabled = false;
+    updatePrompt();
+    input.focus();
+  }
+
+  function cancelPaste() {
+    if (!pasteMode) return;
+    var block = beginBlock();
+    println("cancelled.");
+    endBlock(block);
+    exitPasteModeUI();
+    scrollToLatest();
+  }
+
+  function submitPaste() {
+    if (!pasteMode || !pasteTextarea) return;
+    var text = pasteTextarea.value;
+    if (!text.trim()) {
+      var emptyBlock = beginBlock();
+      println("nothing to paste.");
+      endBlock(emptyBlock);
+      exitPasteModeUI();
+      scrollToLatest();
+      return;
+    }
+
+    exitPasteModeUI();
+
+    var block = beginBlock();
+    println("uploading...");
+    endBlock(block);
+    scrollToLatest();
+
+    var blob = new Blob([text], { type: "text/plain" });
+    var form = new FormData();
+    form.append("file", blob, "paste.txt");
+
+    fetch("/paste-api/", { method: "POST", body: form })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.text();
+      })
+      .then(function (url) {
+        var okBlock = beginBlock();
+        printExternalLink("posted: ", url.trim());
+        endBlock(okBlock);
+        scrollToLatest();
+      })
+      .catch(function () {
+        var errBlock = beginBlock();
+        println("upload failed -- try again in a bit.");
+        endBlock(errBlock);
+        scrollToLatest();
+      });
+  }
+
+  function enterPasteMode() {
+    hideSuggestions();
+    pasteMode = true;
+
+    var wrap = document.createElement("div");
+    wrap.className = "term-paste";
+
+    var ta = document.createElement("textarea");
+    ta.className = "term-paste-box";
+    ta.placeholder = "paste or type text here...";
+    ta.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancelPaste();
+      } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        submitPaste();
+      }
+      e.stopPropagation();
+    });
+    wrap.appendChild(ta);
+
+    var actions = document.createElement("div");
+    actions.className = "term-paste-actions";
+
+    var postBtn = document.createElement("span");
+    postBtn.className = "term-file";
+    postBtn.tabIndex = 0;
+    postBtn.setAttribute("role", "button");
+    postBtn.textContent = "[ ctrl+enter to post ]";
+    postBtn.addEventListener("click", function () { submitPaste(); });
+    postBtn.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); submitPaste(); }
+    });
+    actions.appendChild(postBtn);
+    actions.appendChild(document.createTextNode("  "));
+
+    var cancelBtn = document.createElement("span");
+    cancelBtn.className = "term-file";
+    cancelBtn.tabIndex = 0;
+    cancelBtn.setAttribute("role", "button");
+    cancelBtn.textContent = "[ esc to cancel ]";
+    cancelBtn.addEventListener("click", function () { cancelPaste(); });
+    cancelBtn.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cancelPaste(); }
+    });
+    actions.appendChild(cancelBtn);
+
+    wrap.appendChild(actions);
+    appendLine(wrap);
+
+    pasteTextarea = ta;
+    input.disabled = true;
+    if (promptEl) promptEl.textContent = "pastebin -- ctrl+enter to post, esc to cancel";
+    setTimeout(function () { ta.focus(); }, 0);
+    scrollToLatest();
+  }
+
   input.addEventListener("keydown", function (e) {
+    if (pasteMode) return;
     if (composeMode) {
       if (e.key === "Escape" || (e.ctrlKey && (e.key === "c" || e.key === "C"))) {
         e.preventDefault();
