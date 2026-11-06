@@ -1,0 +1,9 @@
+// Cloudflare Workers static-assets config. Build: zola build (output in ./public).
+{
+  "name": "legitbiz",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page"
+  }
+}
