@@ -1,38 +1,52 @@
 +++
-title = "whoami"
-template = "page.html"
+title = "about"
+template = "term_page.html"
 path = "about"
+description = "Why Legit Biz Consulting exists and how we work."
+
+[extra]
+cmd = "whoami"
 +++
 
 <div class="bio-flex">
-<img src="/images/cam.jpg" alt="cam, playing bass live" class="avatar">
+<img src="/images/cam.jpg" alt="cam, founder of Legit Biz Consulting" class="avatar">
 <div class="bio-copy">
 
-cam. QA analyst by trade -- about a decade in, mostly places where a
-bug is expensive rather than annoying: gambling, IoT, video games.
-Currently at Pentair building test automation and hardware simulators;
-before that Grover Gaming, Epic Games, a few other stops in between.
-
-The habit that carries over everywhere: take a system apart until it
-stops lying about its own state, then build the tooling so nobody has
-to find that out by hand next time. Same instinct that runs this box.
-
-That photo's from a bass show, not a stock shoot -- ran a three-piece
-rock band for a few years before QA ate the schedule. Different kind
-of systems work, same appetite for chaos on a deadline.
+Legit Biz Consulting builds the systems behind small businesses and
+independent creatives: the tools, leads, and admin that run in the
+background so you can get back to the work.
 
 </div>
 </div>
 
-## Skills
+## Why we exist
 
-Test strategy and planning, hardware/API testing, black box and white
-box testing, performance/security/functional/UX testing, virtual test
-environments.
+Our founder started out in music, and the music kept getting buried
+under admin: the website, promoters, booking agents, merch logistics.
+Most of the week went to everything except the work.
 
-Linux/macOS/Windows, AWS/Azure, networking, pentesting, data
-analytics/visualization.
+Small businesses and independent creatives fight that same battle
+every day. We started Legit Biz Consulting to fix it, by building the
+systems that run behind the scenes so you can focus on what you're
+actually good at.
 
-Python, C++, SQL, JavaScript, C#, PowerShell.
+## How we work
 
-Full work history on the [cv](/cv).
+- **Tools first.** We'd rather build something that runs without us
+  than bill you for hours.
+- **You own what we build.** No lock-in, no hostage software.
+- **Plain language.** We explain what we're doing and why, without the
+  jargon.
+- **Security minded.** We treat your data and your customers' data with
+  care, and security is becoming a bigger part of what we offer. Our
+  [posts](/) are where that work shows up first.
+
+## Our guardrails
+
+- We only use public data.
+- We never run any kind of security testing without written
+  permission.
+- We never fake reviews, engagement, or results.
+- If we ever hold a stake in a client's business, we say so up front.
+
+[Get in touch &rarr;](@/contact.md)

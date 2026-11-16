@@ -2,17 +2,16 @@
 {% block content %}
 {% set posts = get_section(path="posts/_index.md") %}
 {% set about = get_page(path="about.md") %}
-{% set music = get_page(path="music.md") %}
-{% set things = get_page(path="thingsAndStuff.md") %}
-{% set cv = get_page(path="cv.md") %}
 {% set contact = get_page(path="contact.md") %}
 {% set tools = get_page(path="tools.md") %}
-{% set pastebin_page = get_page(path="pastebin.md") %}
-{% set other_stuff = get_page(path="otherStuff.md") %}
+{% set services = get_page(path="services.md") %}
+{% set process = get_page(path="process.md") %}
+{% set faq = get_page(path="faq.md") %}
+{% set work = get_page(path="work.md") %}
 <div class="terminal-window">
   <div class="terminal-titlebar">
     <span class="tb-dots"><span class="tb-dot tb-red"></span><span class="tb-dot tb-yellow"></span><span class="tb-dot tb-green"></span></span>
-    <span class="tb-title">cam@arch — zsh</span>
+    <span class="tb-title">guest@legitbiz — zsh</span>
   </div>
   <div class="terminal" id="terminal">
     <div class="term-input-line">
@@ -43,33 +42,49 @@ window.__POSTS__ = [
     title: {{ page.title | json_encode() | safe }},
     date: {{ page.date | date(format="%Y-%m-%d") | json_encode() | safe }},
     permalink: {{ page.permalink | json_encode() | safe }},
-    body: {{ (page.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }}
+    body: {{ page.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }}
   }{% if not loop.last %},{% endif %}
   {% endfor %}
 ];
 window.__ABOUT_URL__ = {{ (get_url(path="about") ~ "/") | json_encode() | safe }};
-window.__ABOUT_BODY__ = {{ (about.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__ABOUT_BODY__ = {{ about.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
 window.__ABOUT_IMG__ = {{ get_url(path="images/cam.jpg") | json_encode() | safe }};
-window.__MUSIC_URL__ = {{ (get_url(path="music") ~ "/") | json_encode() | safe }};
-window.__MUSIC_BODY__ = {{ (music.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
-window.__THINGS_URL__ = {{ (get_url(path="thingsAndStuff") ~ "/") | json_encode() | safe }};
-window.__THINGS_BODY__ = {{ (things.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
-window.__CV_URL__ = {{ (get_url(path="cv") ~ "/") | json_encode() | safe }};
-window.__CV_BODY__ = {{ (cv.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
 window.__CONTACT_URL__ = {{ (get_url(path="contact") ~ "/") | json_encode() | safe }};
-window.__CONTACT_BODY__ = {{ (contact.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
+window.__CONTACT_BODY__ = {{ contact.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
+window.__SERVICES_URL__ = {{ (get_url(path="services") ~ "/") | json_encode() | safe }};
+window.__SERVICES_BODY__ = {{ services.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
+window.__PROCESS_URL__ = {{ (get_url(path="process") ~ "/") | json_encode() | safe }};
+window.__PROCESS_BODY__ = {{ process.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
+window.__FAQ_URL__ = {{ (get_url(path="faq") ~ "/") | json_encode() | safe }};
+window.__FAQ_BODY__ = {{ faq.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
+window.__WORK_URL__ = {{ (get_url(path="work") ~ "/") | json_encode() | safe }};
+window.__WORK_BODY__ = {{ work.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
 window.__TOOLS_URL__ = {{ (get_url(path="tools") ~ "/") | json_encode() | safe }};
-window.__TOOLS_BODY__ = {{ (tools.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
-window.__PASTEBIN_URL__ = {{ (get_url(path="pastebin") ~ "/") | json_encode() | safe }};
-window.__PASTEBIN_BODY__ = {{ (pastebin_page.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
-window.__OTHERSTUFF_URL__ = {{ (get_url(path="otherStuff") ~ "/") | json_encode() | safe }};
-window.__OTHERSTUFF_BODY__ = {{ (other_stuff.content | replace(from="</p>", to="\n") | striptags | trim) | json_encode() | safe }};
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-if (typeof emailjs !== "undefined") {
-  emailjs.init({ publicKey: "O7JSP9f6YzNFM68Y5" });
-}
+window.__TOOLS_BODY__ = {{ tools.content | replace(from="<h2", to="
+## <h2") | replace(from="<h3", to="
+### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
+") | striptags | trim | json_encode() | safe }};
 </script>
 <script src="{{ get_url(path="terminal.js") }}" defer></script>
 {% endblock content %}

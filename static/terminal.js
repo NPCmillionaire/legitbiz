@@ -57,6 +57,52 @@
     appendLine(line);
   }
 
+  // prints a page's text straight into the terminal output (instead of the
+  // full-screen pager), with a link to the standalone page at the end.
+  function printDoc(title, body, url, img) {
+    printOk("# " + title);
+    if (img) {
+      var pic = document.createElement("img");
+      pic.className = "avatar";
+      pic.src = img;
+      pic.alt = "cam, founder of Legit Biz Consulting";
+      appendLine(pic);
+    }
+    // markdown is hard-wrapped, so re-join wrapped lines into paragraphs and
+    // let the terminal wrap them; headings and list items start new lines.
+    var paras = [];
+    var cur = null;
+    String(body || "(empty)").split("\n").forEach(function (raw) {
+      var l = raw.replace(/\s+$/, "");
+      if (l.trim() === "") { cur = null; return; }
+      if (/^#{2,3} /.test(l.trim())) { paras.push({ h: true, t: l.trim() }); cur = null; return; }
+      if (/^\s*- /.test(l)) { cur = { h: false, t: l }; paras.push(cur); return; }
+      if (cur) { cur.t += " " + l.trim(); return; }
+      cur = { h: false, t: l.trim() };
+      paras.push(cur);
+    });
+    paras.forEach(function (p) {
+      if (p.h) printOk(p.t); else println(p.t);
+    });
+    if (url) {
+      var line = document.createElement("div");
+      line.className = "term-label";
+      line.appendChild(document.createTextNode("page: "));
+      var a = document.createElement("a");
+      a.className = "term-file";
+      a.href = url;
+      a.textContent = url;
+      line.appendChild(a);
+      appendLine(line);
+    }
+    println("");
+  }
+
+  function printSection(dir) {
+    var node = getNode([dir, dir + ".md"]);
+    printDoc(dir, node && node.body, node && node.url);
+  }
+
   // ---------------------------------------------------------------------
   // syntax highlighting: tokenizes a command line into colored spans --
   // first word colored green/red for known/unknown command, quoted
@@ -315,15 +361,6 @@
       flex.appendChild(copy);
       body.appendChild(flex);
 
-      var cvLine = document.createElement("div");
-      cvLine.className = "pager-cv-line";
-      cvLine.appendChild(document.createTextNode("Full work history: "));
-      var cvLink = document.createElement("a");
-      cvLink.className = "term-file";
-      cvLink.href = window.__CV_URL__ || "/cv/";
-      cvLink.textContent = window.__CV_URL__ || "/cv/";
-      cvLine.appendChild(cvLink);
-      body.appendChild(cvLine);
     });
   }
 
@@ -413,51 +450,66 @@
     };
   });
 
-  fs.children["whoami"] = {
+  fs.children["about"] = {
     type: "dir",
     children: {
       "about.md": {
         type: "file",
-        title: "whoami",
+        title: "about",
         url: window.__ABOUT_URL__,
         body: window.__ABOUT_BODY__ || "",
       },
-      "resume.md": {
-        type: "file",
-        title: "cv",
-        url: window.__CV_URL__,
-        body: window.__CV_BODY__ || "",
-      },
-      ".plan": {
-        type: "file",
-        title: ".plan",
-        body:
-          "finger(1) is dead but this file doesn't know that yet.\n\n" +
-          "current status: still trying to figure out if the terminal or the\n" +
-          "blog posts are the actual point of this site.\n\n" +
-          "you found this by either guessing the filename or running `ls -a`.\n" +
-          "either way, well done.",
-      },
     },
   };
 
-  fs.children["music"] = {
+  fs.children["services"] = {
     type: "dir",
     children: {
-      "playlist.md": {
+      "services.md": {
         type: "file",
-        title: "music",
-        url: window.__MUSIC_URL__,
-        body: window.__MUSIC_BODY__ || "",
+        title: "services",
+        url: window.__SERVICES_URL__,
+        body: window.__SERVICES_BODY__ || "",
       },
     },
   };
 
-  // tools/pastebin/otherStuff are real top-level pages (their own URLs,
-  // linked absolutely from the nav bar and from thingsAndStuff's own
-  // copy), so they're defined as top-level fs entries and then reused
-  // by reference inside thingsAndStuff -- letting both `cd /tools` and
-  // `cd thingsAndStuff && cd tools` resolve to the same directory.
+  fs.children["process"] = {
+    type: "dir",
+    children: {
+      "process.md": {
+        type: "file",
+        title: "process",
+        url: window.__PROCESS_URL__,
+        body: window.__PROCESS_BODY__ || "",
+      },
+    },
+  };
+
+  fs.children["faq"] = {
+    type: "dir",
+    children: {
+      "faq.md": {
+        type: "file",
+        title: "faq",
+        url: window.__FAQ_URL__,
+        body: window.__FAQ_BODY__ || "",
+      },
+    },
+  };
+
+  fs.children["work"] = {
+    type: "dir",
+    children: {
+      "work.md": {
+        type: "file",
+        title: "work",
+        url: window.__WORK_URL__,
+        body: window.__WORK_BODY__ || "",
+      },
+    },
+  };
+
   fs.children["tools"] = {
     type: "dir",
     children: {
@@ -467,45 +519,6 @@
         url: window.__TOOLS_URL__,
         body: window.__TOOLS_BODY__ || "",
       },
-    },
-  };
-
-  fs.children["pastebin"] = {
-    type: "dir",
-    children: {
-      "readme.md": {
-        type: "file",
-        title: "pastebin",
-        url: window.__PASTEBIN_URL__,
-        body: window.__PASTEBIN_BODY__ || "",
-      },
-    },
-  };
-
-  fs.children["otherStuff"] = {
-    type: "dir",
-    children: {
-      "readme.md": {
-        type: "file",
-        title: "otherStuff",
-        url: window.__OTHERSTUFF_URL__,
-        body: window.__OTHERSTUFF_BODY__ || "",
-      },
-    },
-  };
-
-  fs.children["thingsAndStuff"] = {
-    type: "dir",
-    children: {
-      "notes.md": {
-        type: "file",
-        title: "thingsAndStuff",
-        url: window.__THINGS_URL__,
-        body: window.__THINGS_BODY__ || "",
-      },
-      "tools": fs.children["tools"],
-      "pastebin": fs.children["pastebin"],
-      "otherStuff": fs.children["otherStuff"],
     },
   };
 
@@ -568,7 +581,7 @@
   function updatePrompt() {
     if (!promptEl) return;
     promptEl.innerHTML =
-      '<span class="prompt-user">cam@arch</span> ' +
+      '<span class="prompt-user">guest@legitbiz</span> ' +
       '<span class="prompt-path">' + displayPath(cwdPath) + "</span> " +
       '<span class="prompt-arrow">$</span>';
   }
@@ -674,7 +687,13 @@
     help: "help - show available commands",
     ls: "ls [dir] - list a directory",
     cat: "cat <file> - print/open a file",
-    whoami: "whoami - print info about the current user",
+    whoami: "whoami - about legit biz",
+    services: "services - what we do",
+    process: "process - how an engagement works",
+    work: "work - things we've built",
+    faq: "faq - common questions",
+    hire: "hire - tell us about your business",
+    quote: "quote - ask what a project would take",
     pwd: "pwd - print working directory",
     cd: "cd <dir> - change working directory",
     echo: "echo <text> - display a line of text",
@@ -742,7 +761,12 @@
       println("available commands:");
       printHelpLine("  ls [dir]      list a directory");
       printHelpLine("  cat <file>    open a file");
-      printHelpLine("  whoami        about this site");
+      printHelpLine("  whoami        about legit biz");
+      printHelpLine("  services      what we do");
+      printHelpLine("  process       how an engagement works");
+      printHelpLine("  work          things we've built");
+      printHelpLine("  faq           common questions");
+      printHelpLine("  hire          tell us about your business (alias: quote)");
       printHelpLine("  pwd           print working directory");
       printHelpLine("  cd <dir>      change working directory");
       printHelpLine("  echo <text>   print text back");
@@ -831,14 +855,36 @@
         printError("cat: " + name + ": Is a directory");
         return;
       }
-      if (resolved.join("/") === "whoami/about.md") {
-        showAbout();
+      if (resolved.join("/") === "about/about.md") {
+        commands.whoami();
         return;
       }
-      openPager(node.title || basename(resolved), node.body || "(empty)");
+      if (resolved[0] === "posts") {
+        openPager(node.title || basename(resolved), node.body || "(empty)");
+        return;
+      }
+      printDoc(node.title || basename(resolved), node.body, node.url);
     },
     whoami: function () {
-      showAbout();
+      printDoc("about", window.__ABOUT_BODY__, window.__ABOUT_URL__, window.__ABOUT_IMG__);
+    },
+    services: function () {
+      printSection("services");
+    },
+    process: function () {
+      printSection("process");
+    },
+    work: function () {
+      printSection("work");
+    },
+    faq: function () {
+      printSection("faq");
+    },
+    hire: function () {
+      enterComposeMode();
+    },
+    quote: function () {
+      enterComposeMode();
     },
     pwd: function () {
       println(pathToString(cwdPath));
@@ -865,8 +911,8 @@
       println(new Date().toString());
     },
     neofetch: function () {
-      printOk("cam@arch");
-      println("--------");
+      printOk("guest@legitbiz");
+      println("--------------");
       printKV("OS: ", "Arch Linux x86_64");
       printKV("Host: ", "homelab");
       printKV("Shell: ", "terminal.js");
@@ -1318,7 +1364,7 @@
   // Mouse click fills the command in -- it doesn't run it, since most of
   // these still need an argument (cat <file>, cd <dir>, ...).
   // ---------------------------------------------------------------------
-  var POPULAR_ORDER = ["ls", "cat", "cd", "help", "whoami", "tree", "find", "grep", "contact", "github", "pastebin", "guestbook", "history", "man", "clear"];
+  var POPULAR_ORDER = ["ls", "cat", "cd", "help", "services", "process", "work", "faq", "hire", "whoami", "tree", "find", "grep", "contact", "github", "pastebin", "guestbook", "history", "man", "clear"];
 
   var suggestEl = document.createElement("div");
   suggestEl.className = "term-suggest";
@@ -1498,8 +1544,8 @@
   // ---------------------------------------------------------------------
   // contact: two-step compose mode (reply-to email, then message) that
   // hijacks the input line the same way ctrl+r search does below, then
-  // ships the message via EmailJS straight from the browser -- no
-  // backend on this box handles mail, so the send call is client-side.
+  // POSTs the message same-origin to /api/contact.php, which mails it
+  // to cam@legitbiz.xyz (rate-limited, honeypot, origin-checked).
   // ---------------------------------------------------------------------
   var composeMode = null; // null | "email" | "message"
   var composeEmail = "";
@@ -1524,31 +1570,36 @@
     endBlock(block);
     scrollToLatest();
 
-    if (typeof emailjs === "undefined") {
-      var failBlock = beginBlock();
-      printError("mail client didn't load -- email me directly at npcmillionaire@pm.me");
-      endBlock(failBlock);
-      scrollToLatest();
-      return;
-    }
-
-    emailjs.send("service_27aacyq", "template_erogod8", {
-      reply_to: email || "(none given)",
-      message: message,
-    }).then(
-      function () {
-        var okBlock = beginBlock();
-        printOk("sent -- thanks, I'll get back to you.");
-        endBlock(okBlock);
+    fetch("/api/contact.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email || "", message: message, website: "" }),
+    })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          return { status: r.status, body: j };
+        });
+      })
+      .then(function (res) {
+        var b = beginBlock();
+        if (res.body && res.body.ok) {
+          printOk("sent -- thanks, I'll get back to you.");
+        } else if (res.status === 429) {
+          printError("slow down -- try again in a minute, or email cam@legitbiz.xyz");
+        } else if (res.body && res.body.error === "email") {
+          printError("that email doesn't look right -- run contact again");
+        } else {
+          printError("send failed -- email me directly at cam@legitbiz.xyz");
+        }
+        endBlock(b);
         scrollToLatest();
-      },
-      function () {
-        var errBlock = beginBlock();
-        printError("send failed -- email me directly at npcmillionaire@pm.me");
-        endBlock(errBlock);
+      })
+      .catch(function () {
+        var b = beginBlock();
+        printError("send failed -- email me directly at cam@legitbiz.xyz");
+        endBlock(b);
         scrollToLatest();
-      }
-    );
+      });
   }
 
   // ---------------------------------------------------------------------
@@ -1835,14 +1886,17 @@
 
   function printWelcome() {
     var block = beginBlock();
-    println(greeting() + " welcome to cam@arch -- this is a fake but functional terminal.");
-    println("type a command and press enter. a few to start with:");
-    println("  ls            see what's here");
-    println("  cd <dir>      move into whoami/, posts/, music/, contact/, ...");
-    println("  cat <file>    open a file");
-    println("  help          full command list");
+    println(greeting() + " welcome to Legit Biz Consulting.");
+    println("we build the systems behind small businesses: internal tools, warm leads from public data, ethical growth, and security basics. you keep the tools.");
     println("");
-    println("tab completes commands/paths, up/down cycles history, ctrl+r searches it, && chains commands.");
+    println("new here? type one of these and press enter:");
+    printHelpLine("  services      what we do");
+    printHelpLine("  process       how working with us goes");
+    printHelpLine("  work          things we've built");
+    printHelpLine("  faq           common questions");
+    printHelpLine("  hire          tell us what's eating your time");
+    println("");
+    println("or poke around: ls, cd posts, cat <file>, help. tab completes, && chains.");
     endBlock(block);
   }
 

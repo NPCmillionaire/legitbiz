@@ -2,12 +2,13 @@
 title = "contact"
 template = "contact.html"
 path = "contact"
+description = "Tell us about your business and what's eating your time."
 +++
 
-npcmillionaire@pm.me
+[cam@legitbiz.xyz](mailto:cam@legitbiz.xyz)
 
-[github.com/noremac828](https://github.com/noremac828)
+Tell us a bit about your business and the work you'd rather not be
+doing. We'll get back to you within two business days.
 
 Type `contact` (or just wait a second -- it runs on its own here) to
-send a message straight from the terminal. Reachable for QA/test
-engineering work, homelab questions, or anything posted here.
+send a message straight from the terminal.

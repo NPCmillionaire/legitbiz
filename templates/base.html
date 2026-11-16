@@ -24,21 +24,23 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="prompt" data-cmd="cd /">cam@legitbiz.xyz:~#</div>
+    <div class="prompt" data-cmd="cd /">guest@legitbiz:~$</div>
     <nav class="site-nav">
-      <a href="{{ get_url(path="/") }}" data-cmd="cd /posts &amp;&amp; ls">posts/</a>
-      <a href="{{ get_url(path="about") }}" data-cmd="whoami">whoami/</a>
-      <a href="{{ get_url(path="music") }}" data-cmd="cd /music &amp;&amp; ls">music/</a>
-      <a href="{{ get_url(path="thingsAndStuff") }}" data-cmd="cd /thingsAndStuff &amp;&amp; ls">thingsAndStuff/</a>
-      <a href="{{ get_url(path="contact") }}" data-cmd="contact">contact/</a>
+      <a href="{{ get_url(path="about") }}" data-cmd="whoami">about/</a>
+      <a href="{{ get_url(path="services") }}" data-cmd="services">services/</a>
+      <a href="{{ get_url(path="process") }}" data-cmd="process">process/</a>
+      <a href="{{ get_url(path="work") }}" data-cmd="work">work/</a>
       <a href="{{ get_url(path="tools") }}" data-cmd="cd /tools">tools/</a>
+      <a href="{{ get_url(path="/") }}" data-cmd="cd /posts &amp;&amp; ls">posts/</a>
+      <a href="{{ get_url(path="faq") }}" data-cmd="faq">faq/</a>
+      <a href="{{ get_url(path="contact") }}" data-cmd="contact">contact/</a>
     </nav>
   </header>
   <main>
     {% block content %}{% endblock content %}
   </main>
   <footer class="site-footer">
-    <span>this is neither financial NOR legal advice. these articles contain no commercial value.</span>
+    <span>&copy; {{ now() | date(format="%Y") }} Legit Biz Consulting &mdash; biz design/consulting. ethical work only. posts are not financial or legal advice. &middot; <a href="mailto:cam@legitbiz.xyz">cam@legitbiz.xyz</a></span>
   </footer>
   <script>
   fetch("http://100.111.221.80:8833/hits", { method: "POST", mode: "no-cors" }).catch(function () {});

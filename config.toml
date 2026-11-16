@@ -1,6 +1,6 @@
-base_url = "http://100.111.221.80"
-title = "cam@arch"
-description = "Notes from a homelab, and whatever else."
+base_url = "https://legitbiz.xyz"
+title = "Legit Biz Consulting"
+description = "Tools-first consulting for small businesses and creatives: internal tools, warm leads from public data, ethical growth, and security basics."
 compile_sass = false
 generate_feeds = true
 feed_filenames = ["atom.xml"]
