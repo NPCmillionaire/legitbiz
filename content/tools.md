@@ -22,6 +22,7 @@ in-browser security toolbox. For the bigger things we've built, see
       <h3><a href="https://unredact.tools">unredact.tools</a></h3>
       <p>See what a photo, PDF or Office file gives away (GPS, device serials,
       authors, failed redactions, printer dots), then get a clean copy.</p>
+      <p class="tool-demo"><img src="/images/demos/unredact-tools.gif" alt="unredact.tools running in a terminal" loading="lazy"><span hidden>demo: /images/demos/unredact-tools.gif</span></p>
       <ul>
         <li>use it: <a href="https://unredact.tools">https://unredact.tools</a></li>
         <li><code>pipx install "unredact-tools[all]"</code></li>
@@ -32,7 +33,15 @@ in-browser security toolbox. For the bigger things we've built, see
       <h3><a href="https://github.com/NPCmillionaire/govint">govint</a></h3>
       <p>Pull and search public government records: licenses, permits and
       filings. The engine behind our lead generation.</p>
+      <p class="tool-demo"><img src="/images/demos/govint.gif" alt="govint running in a terminal" loading="lazy"><span hidden>demo: /images/demos/govint.gif</span></p>
       <ul><li>source: <a href="https://github.com/NPCmillionaire/govint">https://github.com/NPCmillionaire/govint</a></li></ul>
+    </section>
+    <section class="tool-card build-card">
+      <h3><a href="https://github.com/NPCmillionaire/bettertui">bettertui</a></h3>
+      <p>A friendlier terminal interface for bettercap, the network security tool, driving it
+      over its REST API. For networks you own or are authorized to test.</p>
+      <p class="tool-demo"><img src="/images/demos/bettertui.gif" alt="bettertui running in a terminal" loading="lazy"><span hidden>demo: /images/demos/bettertui.gif</span></p>
+      <ul><li>source: <a href="https://github.com/NPCmillionaire/bettertui">https://github.com/NPCmillionaire/bettertui</a></li></ul>
     </section>
     <section class="tool-card build-card">
       <h3><a href="https://github.com/NPCmillionaire/openpacer">openpacer</a></h3>

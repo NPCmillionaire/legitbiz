@@ -111,7 +111,16 @@
       paras.push(cur);
     });
     paras.forEach(function (p) {
-      if (p.h) printOk(p.t); else printLinked(p.t);
+      // "demo: /images/....gif" lines (hidden text on the page) show the image itself
+      var demo = !p.h && /^demo: (\/images\/\S+\.(?:gif|png|jpe?g|webp))$/i.exec(p.t.trim());
+      if (demo) {
+        var pic = document.createElement("img");
+        pic.className = "term-demo";
+        pic.src = demo[1];
+        pic.alt = "demo";
+        pic.loading = "lazy";
+        appendLine(pic);
+      } else if (p.h) printOk(p.t); else printLinked(p.t);
     });
     if (url) {
       var line = document.createElement("div");

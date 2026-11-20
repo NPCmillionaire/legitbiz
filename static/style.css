@@ -159,6 +159,10 @@ footer.site-footer {
   padding: 0.05rem 0;
 }
 
+/* tool demo GIFs, in the terminal output and on the plain page */
+.term-output img.term-demo,
+.tool-demo img { display: block; max-width: 100%; height: auto; margin: 0.4rem 0 0.6rem; border: 1px solid var(--border); border-radius: 6px; }
+
 /* the toolbox is regular page markup mounted inside the terminal output */
 .term-output .toolbox-panel { white-space: normal; margin: 0.5rem 0 1rem; cursor: auto; }
 .term-output .toolbox-panel div { padding: revert; }
