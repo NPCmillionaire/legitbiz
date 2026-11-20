@@ -5,6 +5,8 @@
   var highlightEl = document.getElementById("term-input-highlight");
   // the in-browser toolbox: only present on /tools, mounted into the output by `toolbox`
   var toolboxPanel = document.getElementById("toolbox-panel");
+  var toolboxGrid = toolboxPanel && toolboxPanel.querySelector(".tool-grid");
+  var toolboxCards = toolboxPanel ? Array.prototype.slice.call(toolboxPanel.querySelectorAll(".tool-card[data-tool]")) : [];
   var history = [];
   var historyIndex = -1;
   var sessionStart = Date.now();
@@ -228,6 +230,96 @@
     line.appendChild(c);
     line.appendChild(document.createTextNode(m[2] + m[3]));
     appendLine(line);
+  }
+
+  // a blank line that keeps its height (an empty div collapses)
+  function gap() {
+    var g = document.createElement("div");
+    g.className = "term-gap";
+    return g;
+  }
+
+  // ---------------------------------------------------------------------
+  // tools page: rows, chips and action links rendered from content/tools.md
+  // ---------------------------------------------------------------------
+  function toolsData() {
+    var d = window.__TOOLS_DATA__ || {};
+    return { oss: d.oss || [], builds: d.builds || [], toolbox: d.kit || [] };
+  }
+
+  // a clickable command: types it into the prompt and runs it
+  function runChip(label, cmd) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "term-run";
+    b.textContent = label;
+    b.title = cmd;
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      typeAndRun(cmd, { reset: false });
+    });
+    return b;
+  }
+
+  function extLink(label, url) {
+    var a = document.createElement("a");
+    a.className = "term-file";
+    a.href = url;
+    a.textContent = label;
+    if (url.indexOf(location.origin) !== 0 && url.charAt(0) !== "/") {
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+    }
+    return a;
+  }
+
+  // "text  [chip] [chip]" -- actions are [label, command] pairs
+  function actionLine(text, actions) {
+    var line = document.createElement("div");
+    line.className = "term-actions";
+    if (text) line.appendChild(document.createTextNode(text + " "));
+    actions.forEach(function (a) { line.appendChild(runChip(a[0], a[1])); });
+    return line;
+  }
+
+  function toolRow(t) {
+    var row = document.createElement("div");
+    row.className = "term-tool";
+    var name = document.createElement("span");
+    name.className = "t-name";
+    name.appendChild(extLink(t.name, t.web || t.source));
+    var desc = document.createElement("span");
+    desc.className = "t-desc";
+    desc.textContent = t.desc;
+    var acts = document.createElement("span");
+    acts.className = "t-acts";
+    if (t.web) acts.appendChild(extLink("web", t.web));
+    acts.appendChild(extLink("source", t.source));
+    if (t.demo) acts.appendChild(runChip("demo", "demo " + t.id));
+    if (t.install) {
+      var code = document.createElement("code");
+      code.textContent = t.install;
+      acts.appendChild(code);
+    }
+    row.appendChild(name);
+    row.appendChild(desc);
+    row.appendChild(acts);
+    return row;
+  }
+
+  function toolboxChips() {
+    var grid = document.createElement("div");
+    grid.className = "term-toolbox-list";
+    toolsData().toolbox.forEach(function (x) {
+      var chip = runChip(x.name, "toolbox " + x.id);
+      var desc = document.createElement("span");
+      desc.className = "t-desc";
+      desc.textContent = x.desc;
+      grid.appendChild(chip);
+      grid.appendChild(desc);
+    });
+    grid.appendChild(runChip("open all", "toolbox all"));
+    return grid;
   }
 
   // "help - show available commands" -> command name colored, rest plain.
@@ -804,7 +896,8 @@
       printHelpLine("  work          things we've built");
       printHelpLine("  faq           common questions");
       printHelpLine("  tools         free tools and what we build");
-      printHelpLine("  toolbox       in-browser security toolbox");
+      printHelpLine("  toolbox [x]   in-browser security toolbox (toolbox all)");
+      printHelpLine("  demo <tool>   watch a tool's demo");
       printHelpLine("  hire          tell us about your business (alias: quote)");
       printHelpLine("  pwd           print working directory");
       printHelpLine("  cd <dir>      change working directory");
@@ -919,19 +1012,90 @@
       printSection("faq");
     },
     tools: function () {
-      printSection("tools");
-      if (toolboxPanel) commands.toolbox();
-      else println("type `toolbox` to open the in-browser toolbox.");
+      var d = toolsData();
+      printOk("# tools");
+      println("free tools, custom builds and an in-browser toolbox. click anything, or type it.");
+      appendLine(gap());
+      printOk("## open source");
+      d.oss.forEach(function (t) { appendLine(toolRow(t)); });
+      appendLine(gap());
+      printOk("## custom builds");
+      var builds = document.createElement("div");
+      builds.className = "term-builds";
+      d.builds.forEach(function (b) {
+        var n = document.createElement("span");
+        n.className = "t-name";
+        n.textContent = b.name;
+        var s = document.createElement("span");
+        s.className = "t-desc";
+        s.textContent = b.desc;
+        builds.appendChild(n);
+        builds.appendChild(s);
+      });
+      appendLine(builds);
+      appendLine(actionLine("built for your business, on infrastructure you own:", [["services", "services"], ["hire us", "hire"]]));
+      appendLine(gap());
+      printOk("## browser toolbox");
+      println("runs entirely in your browser; nothing is sent anywhere. pick one:");
+      appendLine(toolboxChips());
+      appendLine(gap());
     },
-    toolbox: function () {
+    toolbox: function (args) {
+      var id = String(args && args[0] || "").toLowerCase();
       if (!toolboxPanel) {
         // the toolbox markup lives on the tools page; go there and open it
-        window.location.href = window.__TOOLS_URL__;
+        window.location.href = window.__TOOLS_URL__ + (id ? "#" + id : "");
         return;
       }
-      printOk("# toolbox");
-      toolboxPanel.hidden = false;
-      appendLine(toolboxPanel);
+      if (!id) {
+        printOk("# toolbox");
+        println("runs entirely in your browser; nothing is sent anywhere. pick one, or toolbox all:");
+        appendLine(toolboxChips());
+        return;
+      }
+      if (id === "all") {
+        toolboxCards.forEach(function (c) { toolboxGrid.appendChild(c); });
+        printOk("# toolbox: everything");
+        toolboxPanel.hidden = false;
+        appendLine(toolboxPanel);
+        return;
+      }
+      var card = toolboxCards.filter(function (c) { return c.getAttribute("data-tool") === id; })[0];
+      if (!card) {
+        printError("toolbox: no tool called '" + id + "'. type toolbox to list them.");
+        return;
+      }
+      var meta = toolsData().toolbox.filter(function (x) { return x.id === id; })[0];
+      printOk("# " + (meta ? meta.name : id));
+      var one = document.createElement("div");
+      one.className = "toolbox-panel toolbox-single";
+      one.appendChild(card);
+      appendLine(one);
+      appendLine(actionLine("", [["all tools", "toolbox"]]));
+      // `history` in this file is the command history, so use window.history
+      if (window.history.replaceState) window.history.replaceState(null, "", "#" + id);
+    },
+    demo: function (args) {
+      var id = String(args && args[0] || "").toLowerCase();
+      var withDemo = toolsData().oss.filter(function (t) { return t.demo; });
+      var t = withDemo.filter(function (x) { return x.id === id || x.name.toLowerCase() === id; })[0];
+      if (!t) {
+        appendLine(actionLine(id ? "demo: no demo for '" + id + "'. try:" : "demos:",
+          withDemo.map(function (x) { return [x.name, "demo " + x.id]; })));
+        return;
+      }
+      printOk("# " + t.name);
+      var wait = document.createElement("div");
+      wait.className = "term-label";
+      wait.textContent = "loading demo...";
+      appendLine(wait);
+      var pic = document.createElement("img");
+      pic.className = "term-demo";
+      pic.alt = t.name + " running in a terminal";
+      pic.onload = function () { wait.remove(); };
+      pic.onerror = function () { wait.textContent = "demo failed to load."; };
+      pic.src = t.demo;
+      appendLine(pic);
     },
     hire: function () {
       enterComposeMode();

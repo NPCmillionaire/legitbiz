@@ -74,6 +74,7 @@ window.__WORK_BODY__ = {{ work.content | replace(from="<h2", to="
 ### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="
 ") | striptags | trim | json_encode() | safe }};
 window.__TOOLS_URL__ = {{ (get_url(path="tools") ~ "/") | json_encode() | safe }};
+window.__TOOLS_DATA__ = {{ tools.extra | json_encode() | safe }};
 window.__TOOLS_BODY__ = {{ tools.content | replace(from="<h2", to="
 ## <h2") | replace(from="<h3", to="
 ### <h3") | replace(from="<li>", to="  - <li>") | replace(from="</p>", to="

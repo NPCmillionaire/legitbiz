@@ -1,0 +1,19 @@
+{# plain (no-JavaScript) version of the tools page, from content/tools.md's [extra] data #}
+<h2>open source</h2>
+<ul class="tools-plain">
+{% for t in page.extra.oss %}
+  <li><a href="{{ t.web | default(value=t.source) }}"><strong>{{ t.name }}</strong></a> -- {{ t.desc }}.
+    {% if t.web %}<a href="{{ t.web }}">web</a> &middot; {% endif %}<a href="{{ t.source }}">source</a>
+    {% if t.demo %}<img class="tool-demo-img" src="{{ t.demo }}" alt="{{ t.name }} demo" loading="lazy">{% endif %}</li>
+{% endfor %}
+</ul>
+<h2>custom builds</h2>
+<ul class="tools-plain">
+{% for b in page.extra.builds %}  <li><strong>{{ b.name }}</strong> -- {{ b.desc }}</li>
+{% endfor %}</ul>
+<p><a href="{{ get_url(path="services") }}">services</a> &middot; <a href="{{ get_url(path="contact") }}">get in touch</a></p>
+<h2>browser toolbox</h2>
+<p>The toolbox runs in your browser and needs JavaScript.</p>
+<ul class="tools-plain">
+{% for x in page.extra.kit %}  <li><strong>{{ x.name }}</strong> -- {{ x.desc }}</li>
+{% endfor %}</ul>

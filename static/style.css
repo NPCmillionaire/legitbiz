@@ -163,6 +163,61 @@ footer.site-footer {
 .term-output img.term-demo,
 .tool-demo img { display: block; max-width: 100%; height: auto; margin: 0.4rem 0 0.6rem; border: 1px solid var(--border); border-radius: 6px; }
 
+/* tools index: name | description, with actions under the description */
+.term-output .term-tool {
+  display: grid;
+  grid-template-columns: 20ch 1fr;
+  column-gap: 2ch;
+  padding: 0.3rem 0;
+  white-space: normal;
+}
+.term-tool .t-name a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.term-tool .t-name a:hover { text-decoration: underline; }
+.term-tool .t-acts { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 1.2ch; font-size: 0.85em; }
+.term-tool .t-acts code { color: var(--muted); background: none; padding: 0; }
+.term-output .term-builds,
+.term-output .term-toolbox-list {
+  display: grid;
+  grid-template-columns: 20ch 1fr;
+  column-gap: 2ch;
+  row-gap: 0.15rem;
+  white-space: normal;
+}
+.term-builds .t-name { color: var(--fg); }
+.t-desc { color: var(--muted); }
+.term-output .term-actions { white-space: normal; padding-top: 0.4rem; }
+
+/* clickable commands */
+.term-run {
+  font: inherit;
+  font-size: inherit;
+  color: var(--dir);
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0 1.2ch 0 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.term-run:hover, .term-run:focus-visible { color: var(--accent); text-decoration-style: solid; outline: none; }
+.term-toolbox-list .term-run { margin: 0; justify-self: start; }
+
+.term-output .toolbox-single .tool-card { max-width: 46rem; }
+
+@media (max-width: 640px) {
+  .term-output .term-tool,
+  .term-output .term-builds,
+  .term-output .term-toolbox-list { grid-template-columns: 1fr; }
+  .term-tool .t-acts { grid-column: 1; }
+  .term-builds .t-desc, .term-toolbox-list .t-desc { margin-bottom: 0.35rem; }
+}
+
+/* plain (no-JavaScript) tools list */
+.tools-plain li { margin: 0.4rem 0; }
+.tool-demo-img { display: block; max-width: 100%; height: auto; margin: 0.4rem 0; border: 1px solid var(--border); border-radius: 6px; }
+
 /* the toolbox is regular page markup mounted inside the terminal output */
 .term-output .toolbox-panel { white-space: normal; margin: 0.5rem 0 1rem; cursor: auto; }
 .term-output .toolbox-panel div { padding: revert; }
@@ -749,3 +804,5 @@ header.site-header .site-logo:hover { text-decoration: none; }
 .build-card ul { margin: 0.35rem 0 0; padding-left: 1.1rem; font-size: 0.8rem; color: var(--muted); }
 .build-card ul li { margin: 0.12rem 0; }
 .build-cta { margin-top: 1.25rem; border-top: 1px dashed var(--border); padding-top: 1rem; font-size: 0.9rem; color: var(--muted); }
+
+.term-output .term-gap { height: 0.9rem; padding: 0; }
