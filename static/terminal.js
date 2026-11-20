@@ -3,6 +3,8 @@
   var input = document.getElementById("term-input");
   var promptEl = document.getElementById("term-prompt");
   var highlightEl = document.getElementById("term-input-highlight");
+  // the in-browser toolbox: only present on /tools, mounted into the output by `toolbox`
+  var toolboxPanel = document.getElementById("toolbox-panel");
   var history = [];
   var historyIndex = -1;
   var sessionStart = Date.now();
@@ -513,7 +515,7 @@
   fs.children["tools"] = {
     type: "dir",
     children: {
-      "readme.md": {
+      "tools.md": {
         type: "file",
         title: "tools",
         url: window.__TOOLS_URL__,
@@ -766,6 +768,9 @@
       printHelpLine("  process       how an engagement works");
       printHelpLine("  work          things we've built");
       printHelpLine("  faq           common questions");
+      printHelpLine("  tools         free tools and what we build");
+      printHelpLine("  toolbox       in-browser security toolbox");
+      printHelpLine("  status        are the side projects up?");
       printHelpLine("  hire          tell us about your business (alias: quote)");
       printHelpLine("  pwd           print working directory");
       printHelpLine("  cd <dir>      change working directory");
@@ -879,6 +884,42 @@
     },
     faq: function () {
       printSection("faq");
+    },
+    tools: function () {
+      printSection("tools");
+      if (toolboxPanel) commands.toolbox();
+      else println("type `toolbox` to open the in-browser toolbox.");
+    },
+    toolbox: function () {
+      if (!toolboxPanel) {
+        // the toolbox markup lives on the tools page; go there and open it
+        window.location.href = window.__TOOLS_URL__;
+        return;
+      }
+      printOk("# toolbox");
+      toolboxPanel.hidden = false;
+      appendLine(toolboxPanel);
+    },
+    status: function () {
+      printOk("# status");
+      function probe(label, url) {
+        var line = document.createElement("div");
+        line.textContent = label + ": checking...";
+        appendLine(line);
+        fetch(url, { mode: "no-cors" })
+          .then(function () { line.textContent = label + ": up"; line.className = "term-ok"; })
+          .catch(function () { line.textContent = label + ": down"; line.className = "term-err"; });
+      }
+      probe("blog", "http://100.111.221.80/");
+      probe("pastebin", "http://100.111.221.80:8822/");
+      probe("guestbook", "http://100.111.221.80:8833/guestbook");
+      var hits = document.createElement("div");
+      hits.textContent = "hits: ...";
+      appendLine(hits);
+      fetch("http://100.111.221.80:8833/hits")
+        .then(function (r) { return r.json(); })
+        .then(function (d) { hits.textContent = "hits: " + d.count; })
+        .catch(function () { hits.textContent = "hits: unknown"; });
     },
     hire: function () {
       enterComposeMode();
@@ -1894,6 +1935,7 @@
     printHelpLine("  process       how working with us goes");
     printHelpLine("  work          things we've built");
     printHelpLine("  faq           common questions");
+    printHelpLine("  tools         free tools, including unredact.tools");
     printHelpLine("  hire          tell us what's eating your time");
     println("");
     println("or poke around: ls, cd posts, cat <file>, help. tab completes, && chains.");
@@ -1970,8 +2012,9 @@
     });
   });
 
-  document.getElementById("terminal").addEventListener("click", function () {
+  document.getElementById("terminal").addEventListener("click", function (e) {
     if (pagerMode) return;
+    if (toolboxPanel && toolboxPanel.contains(e.target)) return;  // let toolbox fields keep focus
     input.focus();
   });
 

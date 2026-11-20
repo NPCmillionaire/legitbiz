@@ -159,6 +159,10 @@ footer.site-footer {
   padding: 0.05rem 0;
 }
 
+/* the toolbox is regular page markup mounted inside the terminal output */
+.term-output .toolbox-panel { white-space: normal; margin: 0.5rem 0 1rem; cursor: auto; }
+.term-output .toolbox-panel div { padding: revert; }
+
 .term-echo {
   color: var(--fg);
 }
@@ -717,3 +721,27 @@ html[data-term-theme="matrix"] {
   height: auto;
   background: #000;
 }
+
+/* Site logo: [legit] + cursor, themed via --accent / --fg */
+header.site-header .site-logo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+}
+header.site-header .site-logo:hover { text-decoration: none; }
+.site-logo-mark { display: block; height: 1.25rem; width: auto; }
+.site-logo-mark .lb-a { fill: var(--accent); }
+.site-logo-mark .lb-f { fill: var(--fg); }
+.site-tagline { font-size: 0.7rem; letter-spacing: 0.14em; color: var(--muted); }
+
+/* custom-build section on /tools */
+.build-section { margin-bottom: 2.5rem; }
+.build-intro { color: var(--muted); margin-bottom: 1.25rem; }
+.build-card p { font-size: 0.85rem; margin: 0; color: var(--fg); }
+.build-card ul { margin: 0.35rem 0 0; padding-left: 1.1rem; font-size: 0.8rem; color: var(--muted); }
+.build-card ul li { margin: 0.12rem 0; }
+.build-cta { margin-top: 1.25rem; border-top: 1px dashed var(--border); padding-top: 1rem; font-size: 0.9rem; color: var(--muted); }

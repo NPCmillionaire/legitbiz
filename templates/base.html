@@ -13,24 +13,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ config.title }}{% endblock title %}</title>
   <meta name="description" content="{{ config.description }}">
-  <link rel="stylesheet" href="{{ get_url(path="style.css") }}">
+  <link rel="stylesheet" href="{{ get_url(path="style.css", cachebust=true) }}">
   <link rel="alternate" type="application/atom+xml" title="{{ config.title }}" href="{{ get_url(path="atom.xml") }}">
+  <link rel="icon" href="{{ get_url(path="favicon.ico") }}" sizes="any">
   <link rel="icon" type="image/svg+xml" href="{{ get_url(path="favicon.svg") }}">
+  <link rel="apple-touch-icon" href="{{ get_url(path="apple-touch-icon.png") }}">
+  <link rel="manifest" href="{{ get_url(path="site.webmanifest") }}">
   <meta property="og:title" content="{% if page is defined %}{{ page.title }}{% else %}{{ config.title }}{% endif %}">
   <meta property="og:description" content="{% if page is defined and page.description %}{{ page.description }}{% else %}{{ config.description }}{% endif %}">
   <meta property="og:type" content="{% if page is defined %}article{% else %}website{% endif %}">
   <meta property="og:url" content="{% if page is defined %}{{ page.permalink }}{% else %}{{ config.base_url }}{% endif %}">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="{{ get_url(path="images/og-legitbiz.png") }}">
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
   <header class="site-header">
+    {% include "partials/logo.html" %}
     <div class="prompt" data-cmd="cd /">guest@legitbiz:~$</div>
     <nav class="site-nav">
       <a href="{{ get_url(path="about") }}" data-cmd="whoami">about/</a>
       <a href="{{ get_url(path="services") }}" data-cmd="services">services/</a>
       <a href="{{ get_url(path="process") }}" data-cmd="process">process/</a>
       <a href="{{ get_url(path="work") }}" data-cmd="work">work/</a>
-      <a href="{{ get_url(path="tools") }}" data-cmd="cd /tools">tools/</a>
+      <a href="{{ get_url(path="tools") }}" data-cmd="tools">tools/</a>
       <a href="{{ get_url(path="/") }}" data-cmd="cd /posts &amp;&amp; ls">posts/</a>
       <a href="{{ get_url(path="faq") }}" data-cmd="faq">faq/</a>
       <a href="{{ get_url(path="contact") }}" data-cmd="contact">contact/</a>

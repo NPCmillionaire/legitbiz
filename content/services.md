@@ -2,70 +2,50 @@
 title = "services"
 template = "term_page.html"
 path = "services"
-description = "Internal tools, lead generation, branding, ethical SEO, competitor research, and more for small businesses and creatives."
+description = "Web design and development, plus internal tools for generating leads and running the business, for small businesses and creatives."
 
 [extra]
 cmd = "services"
 +++
 
-Every engagement starts with the same question: what's taking up time
-that shouldn't be? Then we build the fix and hand you the keys.
+We're starting small on purpose: two services, done well.
 
-## Internal tools and automation
+## 01 web design and development
 
-Booking systems, inventory tracking, automatic follow-ups, quoting, and
-dashboards that show you how the business is actually doing. Built
-around the way you already work, and yours to keep.
+A custom website that loads fast, works on phones, and doesn't fall
+apart six months later.
 
-## Lead generation
+- **Built for you, not from a template.** Designed around your brand
+  and the people you actually sell to.
+- **Secure from the start.** HTTPS, hardened hosting, and no plugins
+  you don't need, which means fewer ways in.
+- **Ready to be found.** SEO basics, analytics, and a contact form
+  that actually reaches your inbox.
+- **Your call after launch.** Take the keys and run it yourself, or
+  have us host and maintain it.
 
-We turn public government data (licenses, permits, business filings)
-and other sources into warm leads. A new restaurant that just got its
-liquor license is looking for a booking agent. We make sure you hear
-about it first.
+Recent work: [Oak City Hot Sauce](https://www.oakcityhotsauce.com).
 
-## Consistent branding
+## 02 internal tools for leads and operations
 
-One look and voice across your site, socials, menus, flyers, and
-signage, so people recognize you everywhere they see you.
+Small tools that find you customers and take the repetitive work off
+your plate.
 
-## Ethical growth
+- **Lead generation.** Prospect lists built from public records and
+  other public sources, cleaned up and ready to work.
+- **Lead tracking.** A simple pipeline so nothing falls through the
+  cracks. CRM-light, no per-seat fees.
+- **Business automation.** Intake forms, quotes, scheduling, and
+  invoicing, wired together.
+- **Dashboards.** One page that shows how the business is actually
+  doing.
 
-Growth tactics that hold up to scrutiny: better offers, smarter
-follow-ups, and referral loops. Nothing that would embarrass you if a
-customer saw how it worked.
-
-## Ethical SEO
-
-In-house techniques for getting found by the people searching for what
-you offer. No link farms, no keyword stuffing, no tricks that get you
-penalized later.
-
-## Competitor research and monitoring
-
-Know what the shops down the street are charging, launching, and
-saying, without spending your evenings checking.
-
-## Marketing media
-
-Photos, video, audio, and design through our network of freelance
-creatives, made with a DIY spirit and a professional finish.
-
-## Profit improvement
-
-We look at where money comes in and where it leaks out, then fix the
-processes in between.
-
-## Security basics
-
-Sensible protection for your accounts, devices, and customer data:
-the basics most small businesses skip until it's too late. Fuller
-security services are on the way.
+You own everything we build. No lock-in, no monthly SaaS tax.
 
 ---
 
 See [how an engagement works](/process/), or check the [faq](/faq/).
 
-Not sure which of these you need? That's normal.
+Not sure what you need? That's normal.
 [Tell us what's going on](@/contact.md) and we'll point you in the right
 direction.

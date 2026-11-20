@@ -80,5 +80,5 @@ window.__TOOLS_BODY__ = {{ tools.content | replace(from="<h2", to="
 ") | striptags | trim | json_encode() | safe }};
 window.__AUTORUN__ = "contact";
 </script>
-<script src="{{ get_url(path="terminal.js") }}" defer></script>
+<script src="{{ get_url(path="terminal.js", cachebust=true) }}" defer></script>
 {% endblock content %}
