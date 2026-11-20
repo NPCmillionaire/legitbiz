@@ -29,6 +29,16 @@ court records for free, and
 [foiatool](https://github.com/NPCmillionaire/foiatool), which automates
 writing and tracking FOIA requests.
 
+## unredact.tools -- what do your files give away?
+
+**Problem:** photos, PDFs and Office files carry far more than what's on
+screen: GPS coordinates, device serials, author names, text left under
+black-box redactions, printer tracking dots. **Built:** a free,
+open-source scanner that shows what a file leaks in plain English, then
+hands back a clean copy, re-scanned to prove nothing survived.
+[try it &rarr;](https://unredact.tools) &middot;
+[github &rarr;](https://github.com/NPCmillionaire/unredact.tools)
+
 ## unredact.me -- what can someone find about you?
 
 **Problem:** most people and small businesses have no idea how much
