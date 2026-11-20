@@ -2,3 +2,19 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Zola builds 404.html; serve it (with a real 404 status) for missing pages.
+ErrorDocument 404 /404.html
+# No directory listings (e.g. /api/ would list the contact script).
+Options -Indexes
+
+# Pages must revalidate so a deploy is picked up immediately. CSS/JS are
+# cache-busted with ?h=<checksum> in the templates, so they can cache hard.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|xml|txt)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>

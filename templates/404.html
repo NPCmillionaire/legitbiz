@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 {% block title %}404 :: {{ config.title }}{% endblock title %}
 {% block content %}
-<pre>404: No such file or directory</pre>
-<p>the page you're looking for doesn't exist. try <a href="{{ get_url(path="/") }}">going home</a>, or type 'help' in the terminal there.</p>
+<article class="post">
+<pre>guest@legitbiz:~$ cd {{ "{{" }}requested page{{ "}}" }}
+bash: cd: No such file or directory</pre>
+<p>That page doesn't exist. The link may be mistyped, or the page may have moved.
+Try one of these instead:</p>
+<ul>
+  <li><a href="{{ get_url(path="/") }}">home</a> -- or type <code>help</code> in the terminal there</li>
+  <li><a href="{{ get_url(path="services") }}">services/</a> -- what we do for small businesses and creatives</li>
+  <li><a href="{{ get_url(path="work") }}">work/</a> -- what we've built in the open</li>
+  <li><a href="{{ get_url(path="tools") }}">tools/</a> -- free tools, including <a href="https://unredact.tools">unredact.tools</a></li>
+  <li><a href="{{ get_url(path="contact") }}">contact/</a> -- if you were looking for something specific</li>
+</ul>
+</article>
 {% endblock content %}
