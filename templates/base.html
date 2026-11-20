@@ -11,8 +11,9 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}{{ config.title }}{% endblock title %}</title>
-  <meta name="description" content="{{ config.description }}">
+  <title>{% block title %}{% if page is defined and page.title %}{{ page.title }} :: {{ config.title }}{% else %}{{ config.title }}{% endif %}{% endblock title %}</title>
+  <meta name="description" content="{% if page is defined and page.description %}{{ page.description }}{% else %}{{ config.description }}{% endif %}">
+  {% if page is defined %}<link rel="canonical" href="{{ page.permalink }}">{% elif section is defined %}<link rel="canonical" href="{{ section.permalink }}">{% endif %}
   <link rel="stylesheet" href="{{ get_url(path="style.css", cachebust=true) }}">
   <link rel="alternate" type="application/atom+xml" title="{{ config.title }}" href="{{ get_url(path="atom.xml") }}">
   <link rel="icon" href="{{ get_url(path="favicon.ico") }}" sizes="any">
@@ -47,8 +48,5 @@
   <footer class="site-footer">
     <span>&copy; {{ now() | date(format="%Y") }} Legit Biz Consulting &mdash; biz design/consulting. ethical work only. posts are not financial or legal advice. &middot; <a href="mailto:cam@legitbiz.xyz">cam@legitbiz.xyz</a></span>
   </footer>
-  <script>
-  fetch("http://100.111.221.80:8833/hits", { method: "POST", mode: "no-cors" }).catch(function () {});
-  </script>
 </body>
 </html>

@@ -18,7 +18,8 @@ permits, filings), but digging them out by hand takes forever.
 **Built:** a command-line tool that pulls and searches public government
 records. **Why it matters:** it's the engine behind our
 [lead generation](/services/).
-[github &rarr;](https://github.com/NPCmillionaire/govint)
+
+source: <https://github.com/NPCmillionaire/govint>
 
 ## openpacer + foiatool -- public records without the busywork
 
@@ -29,6 +30,10 @@ court records for free, and
 [foiatool](https://github.com/NPCmillionaire/foiatool), which automates
 writing and tracking FOIA requests.
 
+source: <https://github.com/NPCmillionaire/openpacer>
+
+source: <https://github.com/NPCmillionaire/foiatool>
+
 ## unredact.tools -- what do your files give away?
 
 **Problem:** photos, PDFs and Office files carry far more than what's on
@@ -36,8 +41,10 @@ screen: GPS coordinates, device serials, author names, text left under
 black-box redactions, printer tracking dots. **Built:** a free,
 open-source scanner that shows what a file leaks in plain English, then
 hands back a clean copy, re-scanned to prove nothing survived.
-[try it &rarr;](https://unredact.tools) &middot;
-[github &rarr;](https://github.com/NPCmillionaire/unredact.tools)
+
+try it: <https://unredact.tools>
+
+source: <https://github.com/NPCmillionaire/unredact.tools>
 
 ## unredact.me -- what can someone find about you?
 
@@ -45,15 +52,16 @@ hands back a clean copy, re-scanned to prove nothing survived.
 about them is already out there. **Built:** an OPSEC tool that shows
 you what can be gathered about you, so you can clean it up before
 someone uses it.
-[github &rarr;](https://github.com/NPCmillionaire/unredact.me)
+
+source: <https://github.com/NPCmillionaire/unredact.me>
 
 ## fraud-score-engine -- how processors judge your transactions
 
 **Problem:** every card payment gets a hidden fraud score, and merchants
 rarely see why a good customer gets declined. **Built:** an open
-re-creation of how those scores are put together. Background in
-[the fraud score](/posts/the-fraud-score/).
-[github &rarr;](https://github.com/NPCmillionaire/fraud-score-engine)
+re-creation of how those scores are put together.
+
+source: <https://github.com/NPCmillionaire/fraud-score-engine>
 
 ## test automation and hardware simulators
 

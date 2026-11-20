@@ -731,7 +731,6 @@
     history: "history - show command history",
     pastebin: "pastebin - open the pastebin",
     github: "github - open my GitHub profile",
-    guestbook: "guestbook - sign the guestbook",
     "bin-lookup": "bin-lookup - open the BIN/IIN lookup tool",
     find: "find <keyword> - search for files by name",
     grep: "grep <keyword> - search file contents for a keyword",
@@ -797,7 +796,6 @@
       printHelpLine("  faq           common questions");
       printHelpLine("  tools         free tools and what we build");
       printHelpLine("  toolbox       in-browser security toolbox");
-      printHelpLine("  status        are the side projects up?");
       printHelpLine("  hire          tell us about your business (alias: quote)");
       printHelpLine("  pwd           print working directory");
       printHelpLine("  cd <dir>      change working directory");
@@ -807,7 +805,6 @@
       printHelpLine("  history       show command history");
       printHelpLine("  pastebin      open the pastebin");
       printHelpLine("  github        open my GitHub profile");
-      printHelpLine("  guestbook     sign the guestbook");
       printHelpLine("  bin-lookup    open the BIN/IIN lookup tool");
       printHelpLine("  find <text>   search for files by name");
       printHelpLine("  grep <text>   search file contents");
@@ -927,27 +924,6 @@
       toolboxPanel.hidden = false;
       appendLine(toolboxPanel);
     },
-    status: function () {
-      printOk("# status");
-      function probe(label, url) {
-        var line = document.createElement("div");
-        line.textContent = label + ": checking...";
-        appendLine(line);
-        fetch(url, { mode: "no-cors" })
-          .then(function () { line.textContent = label + ": up"; line.className = "term-ok"; })
-          .catch(function () { line.textContent = label + ": down"; line.className = "term-err"; });
-      }
-      probe("blog", "http://100.111.221.80/");
-      probe("pastebin", "http://100.111.221.80:8822/");
-      probe("guestbook", "http://100.111.221.80:8833/guestbook");
-      var hits = document.createElement("div");
-      hits.textContent = "hits: ...";
-      appendLine(hits);
-      fetch("http://100.111.221.80:8833/hits")
-        .then(function (r) { return r.json(); })
-        .then(function (d) { hits.textContent = "hits: " + d.count; })
-        .catch(function () { hits.textContent = "hits: unknown"; });
-    },
     hire: function () {
       enterComposeMode();
     },
@@ -1006,9 +982,6 @@
     },
     github: function () {
       window.location.href = "https://github.com/npcmillionaire";
-    },
-    guestbook: function () {
-      window.location.href = "http://100.111.221.80:8833/guestbook";
     },
     "bin-lookup": function () {
       window.location.href = siteRoot() + "tools/";
@@ -1432,7 +1405,7 @@
   // Mouse click fills the command in -- it doesn't run it, since most of
   // these still need an argument (cat <file>, cd <dir>, ...).
   // ---------------------------------------------------------------------
-  var POPULAR_ORDER = ["ls", "cat", "cd", "help", "services", "process", "work", "faq", "hire", "whoami", "tree", "find", "grep", "contact", "github", "pastebin", "guestbook", "history", "man", "clear"];
+  var POPULAR_ORDER = ["ls", "cat", "cd", "help", "services", "process", "work", "faq", "hire", "whoami", "tree", "find", "grep", "contact", "github", "pastebin", "history", "man", "clear"];
 
   var suggestEl = document.createElement("div");
   suggestEl.className = "term-suggest";
