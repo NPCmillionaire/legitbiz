@@ -23,33 +23,38 @@ in-browser security toolbox. For the bigger things we've built, see
       <p>See what a photo, PDF or Office file gives away (GPS, device serials,
       authors, failed redactions, printer dots), then get a clean copy.</p>
       <ul>
-        <li><a href="https://unredact.tools">use it in your browser</a></li>
+        <li>use it: <a href="https://unredact.tools">https://unredact.tools</a></li>
         <li><code>pipx install "unredact-tools[all]"</code></li>
-        <li><a href="https://github.com/NPCmillionaire/unredact.tools">source on github</a></li>
+        <li>source: <a href="https://github.com/NPCmillionaire/unredact.tools">https://github.com/NPCmillionaire/unredact.tools</a></li>
       </ul>
     </section>
     <section class="tool-card build-card">
       <h3><a href="https://github.com/NPCmillionaire/govint">govint</a></h3>
       <p>Pull and search public government records: licenses, permits and
       filings. The engine behind our lead generation.</p>
+      <ul><li>source: <a href="https://github.com/NPCmillionaire/govint">https://github.com/NPCmillionaire/govint</a></li></ul>
     </section>
     <section class="tool-card build-card">
       <h3><a href="https://github.com/NPCmillionaire/openpacer">openpacer</a></h3>
       <p>Search federal court records without paying per page.</p>
+      <ul><li>source: <a href="https://github.com/NPCmillionaire/openpacer">https://github.com/NPCmillionaire/openpacer</a></li></ul>
     </section>
     <section class="tool-card build-card">
       <h3><a href="https://github.com/NPCmillionaire/foiatool">foiatool</a></h3>
       <p>Write and track FOIA requests without the manual paperwork.</p>
+      <ul><li>source: <a href="https://github.com/NPCmillionaire/foiatool">https://github.com/NPCmillionaire/foiatool</a></li></ul>
     </section>
     <section class="tool-card build-card">
       <h3><a href="https://github.com/NPCmillionaire/unredact.me">unredact.me</a></h3>
       <p>See what can be gathered about you online, so you can clean it up
       before someone uses it.</p>
+      <ul><li>source: <a href="https://github.com/NPCmillionaire/unredact.me">https://github.com/NPCmillionaire/unredact.me</a></li></ul>
     </section>
     <section class="tool-card build-card">
       <h3><a href="https://github.com/NPCmillionaire/fraud-score-engine">fraud-score-engine</a></h3>
       <p>An open re-creation of how card processors score transactions for
       fraud.</p>
+      <ul><li>source: <a href="https://github.com/NPCmillionaire/fraud-score-engine">https://github.com/NPCmillionaire/fraud-score-engine</a></li></ul>
     </section>
   </div>
 </section>

@@ -59,6 +59,32 @@
     appendLine(line);
   }
 
+  // like println, but http(s) URLs in the text become clickable links
+  // (page bodies reach the terminal with their <a> tags stripped)
+  function printLinked(text) {
+    var line = document.createElement("div");
+    var re = /https?:\/\/[^\s"'<>]+/g;
+    var last = 0;
+    var m;
+    while ((m = re.exec(text))) {
+      var url = m[0].replace(/[.,;:)]+$/, "");
+      line.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var a = document.createElement("a");
+      a.className = "term-file";
+      a.href = url;
+      a.textContent = url;
+      if (url.indexOf(location.origin) !== 0) {
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+      }
+      line.appendChild(a);
+      last = m.index + url.length;
+      re.lastIndex = last;
+    }
+    line.appendChild(document.createTextNode(text.slice(last)));
+    appendLine(line);
+  }
+
   // prints a page's text straight into the terminal output (instead of the
   // full-screen pager), with a link to the standalone page at the end.
   function printDoc(title, body, url, img) {
@@ -78,13 +104,14 @@
       var l = raw.replace(/\s+$/, "");
       if (l.trim() === "") { cur = null; return; }
       if (/^#{2,3} /.test(l.trim())) { paras.push({ h: true, t: l.trim() }); cur = null; return; }
-      if (/^\s*- /.test(l)) { cur = { h: false, t: l }; paras.push(cur); return; }
+      // list items get one consistent indent, whatever the source HTML's nesting was
+      if (/^\s*- /.test(l)) { cur = { h: false, t: l.replace(/^\s*- /, "  - ") }; paras.push(cur); return; }
       if (cur) { cur.t += " " + l.trim(); return; }
       cur = { h: false, t: l.trim() };
       paras.push(cur);
     });
     paras.forEach(function (p) {
-      if (p.h) printOk(p.t); else println(p.t);
+      if (p.h) printOk(p.t); else printLinked(p.t);
     });
     if (url) {
       var line = document.createElement("div");
